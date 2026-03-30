@@ -3,9 +3,23 @@ Agent Definitions for Multi-Agent Travel Planner
 Each agent has a specific role, goal, and backstory
 """
 
-from crewai import Agent
+from crewai import Agent, LLM
 from typing import List
 from langchain.tools import BaseTool
+
+
+def create_gemini_llm():
+    """Create a rate-limit-aware Gemini LLM via LiteLLM (not native provider).
+
+    is_litellm=True forces CrewAI to use LiteLLM which has built-in
+    429 retry with exponential backoff — critical for Gemini free tier (5 RPM).
+    """
+    return LLM(
+        model="gemini/gemini-2.0-flash",
+        is_litellm=True,
+        max_retries=10,
+        timeout=300,
+    )
 
 
 def create_travel_manager(tools: List[BaseTool]) -> Agent:
@@ -28,6 +42,7 @@ def create_travel_manager(tools: List[BaseTool]) -> Agent:
             "organized, and always think about the traveler's experience holistically."
         ),
         tools=tools,
+        llm=create_gemini_llm(),
         verbose=True,
         allow_delegation=True,  # Can delegate to other agents
         max_iter=15
@@ -54,6 +69,7 @@ def create_flight_agent(tools: List[BaseTool]) -> Agent:
             "preferences, not just the cheapest option."
         ),
         tools=tools,
+        llm=create_gemini_llm(),
         verbose=True,
         allow_delegation=False
     )
@@ -80,6 +96,7 @@ def create_accommodation_agent(tools: List[BaseTool]) -> Agent:
             "You read reviews critically and know what red flags to watch for."
         ),
         tools=tools,
+        llm=create_gemini_llm(),
         verbose=True,
         allow_delegation=False
     )
@@ -106,6 +123,7 @@ def create_activity_agent(tools: List[BaseTool]) -> Agent:
             "local experiences. You know how to pace a day so travelers don't get exhausted."
         ),
         tools=tools,
+        llm=create_gemini_llm(),
         verbose=True,
         allow_delegation=False
     )
@@ -133,6 +151,7 @@ def create_logistics_agent(tools: List[BaseTool]) -> Agent:
             "Are there strikes or construction affecting transit?"
         ),
         tools=tools,
+        llm=create_gemini_llm(),
         verbose=True,
         allow_delegation=False
     )
@@ -161,6 +180,7 @@ def create_itinerary_compiler_agent(tools: List[BaseTool]) -> Agent:
             "booking links, and insider tips."
         ),
         tools=tools,
+        llm=create_gemini_llm(),
         verbose=True,
         allow_delegation=False
     )
@@ -189,6 +209,7 @@ def create_travel_knowledge_agent(tools: List[BaseTool]) -> Agent:
             "information that helps travelers prepare properly and avoid cultural faux pas."
         ),
         tools=tools,
+        llm=create_gemini_llm(),
         verbose=True,
         allow_delegation=False
     )

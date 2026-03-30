@@ -184,8 +184,8 @@ def main():
     load_dotenv()
 
     # Verify OpenAI API key
-    if not os.getenv("OPENAI_API_KEY"):
-        print("❌ Error: OPENAI_API_KEY not found in environment variables")
+    if not os.getenv("GEMINI_API_KEY"):
+        print("❌ Error: GEMINI_API_KEY not found in environment variables")
         print("Please create a .env file with your OpenAI API key")
         print("See .env.example for reference")
         return

@@ -5,3 +5,8 @@ crewai[tools]
 python-dotenv
 pandas
 tiktoken
+
+# Backend API
+fastapi
+uvicorn
+websockets
