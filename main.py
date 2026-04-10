@@ -1,271 +1,100 @@
 """
-Multi-Agent RAG Travel Planner - Main Orchestration Script
+Multi-Agent AI Travel Planner — CLI Entry Point
 
-This is the complete, runnable system that:
-1. Initializes all tools (including RAG)
-2. Creates all specialized agents
-3. Defines tasks for each agent
-4. Orchestrates the crew workflow
-5. Generates a comprehensive travel itinerary
+Architecture:
+    - 3 AI agents (planning, knowledge, compilation) for reasoning
+    - 4 API services (flights, accommodation, activities, logistics) for real-time data
+    - AI only handles analysis; data comes from real APIs
 
 Usage:
     python main.py
-
-License:
-    MIT License - See LICENSE file for details
 """
 
 import os
+import asyncio
 from dotenv import load_dotenv
-from crewai import Crew, Process
-
-# Import CrewAI-native tools
-from tools.crewai_tools import FlightSearchTool, HotelSearchTool, ActivitySearchTool, TravelKnowledgeTool
-
-# Import agents
-from agents.agents import (
-    create_travel_manager,
-    create_flight_agent,
-    create_accommodation_agent,
-    create_activity_agent,
-    create_logistics_agent,
-    create_itinerary_compiler_agent,
-    create_travel_knowledge_agent
-)
-
-# Import tasks
-from agents.tasks import (
-    create_planning_task,
-    create_flight_research_task,
-    create_accommodation_research_task,
-    create_activity_research_task,
-    create_logistics_task,
-    create_knowledge_consultation_task,
-    create_itinerary_compilation_task
-)
 
 
-def initialize_tools():
-    """
-    Initialize all tools for the agents
-    Returns dictionary of CrewAI-native tools
-    """
-    print("🔧 Initializing tools...")
-
-    # Create CrewAI-native tool instances
-    flight_tool = FlightSearchTool()
-    hotel_tool = HotelSearchTool()
-    activity_tool = ActivitySearchTool()
-    knowledge_tool = TravelKnowledgeTool()
-
-    print("✅ All tools initialized successfully\n")
-
-    return {
-        'flight': flight_tool,
-        'hotel': hotel_tool,
-        'activity': activity_tool,
-        'knowledge': knowledge_tool
-    }
-
-
-def create_travel_crew(user_request: str):
-    """
-    Create the complete crew with all agents and tasks
-
-    Args:
-        user_request: The user's travel planning request
-
-    Returns:
-        Configured Crew ready to execute
-    """
-    print("👥 Creating agent crew...\n")
-
-    # Initialize tools
-    tools = initialize_tools()
-
-    # Create agents with CrewAI-native tools
-    travel_manager = create_travel_manager(
-        tools=[tools['knowledge']]
-    )
-
-    flight_agent = create_flight_agent(
-        tools=[tools['flight']]
-    )
-
-    accommodation_agent = create_accommodation_agent(
-        tools=[tools['hotel']]
-    )
-
-    activity_agent = create_activity_agent(
-        tools=[tools['activity'], tools['knowledge']]
-    )
-
-    logistics_agent = create_logistics_agent(
-        tools=[tools['knowledge']]
-    )
-
-    knowledge_agent = create_travel_knowledge_agent(
-        tools=[tools['knowledge']]
-    )
-
-    itinerary_compiler = create_itinerary_compiler_agent(
-        tools=[]  # Compiler synthesizes info from other agents
-    )
-
-    print("✅ Agents created successfully\n")
-    print("📋 Creating tasks...\n")
-
-    # Create tasks
-    planning_task = create_planning_task(travel_manager, user_request)
-
-    flight_task = create_flight_research_task(flight_agent, planning_task)
-
-    accommodation_task = create_accommodation_research_task(
-        accommodation_agent, planning_task
-    )
-
-    activity_task = create_activity_research_task(activity_agent, planning_task)
-
-    logistics_task = create_logistics_task(logistics_agent, planning_task)
-
-    # Knowledge task - extract destination from user request
-    # In production, you'd parse this more intelligently
-    knowledge_task = create_knowledge_consultation_task(
-        knowledge_agent,
-        destination="the destinations mentioned in the travel plan"
-    )
-
-    compilation_task = create_itinerary_compilation_task(
-        agent=itinerary_compiler,
-        planning_task=planning_task,
-        flight_task=flight_task,
-        accommodation_task=accommodation_task,
-        activity_task=activity_task,
-        logistics_task=logistics_task,
-        knowledge_task=knowledge_task,
-        user_request=user_request
-    )
-
-    print("✅ Tasks created successfully\n")
-
-    # Create the crew
-    crew = Crew(
-        agents=[
-            travel_manager,
-            flight_agent,
-            accommodation_agent,
-            activity_agent,
-            logistics_agent,
-            knowledge_agent,
-            itinerary_compiler
-        ],
-        tasks=[
-            planning_task,
-            flight_task,
-            accommodation_task,
-            activity_task,
-            logistics_task,
-            knowledge_task,
-            compilation_task
-        ],
-        process=Process.sequential,  # Tasks run in sequence
-        verbose=True,  # Show detailed output
-        # memory=True,  # Enable memory for agents to remember context
-    )
-
-    return crew
-
-
-def main():
-    """
-    Main execution function
-    """
-    # Load environment variables
+async def main():
     load_dotenv()
 
-    # Verify OpenAI API key
     if not os.getenv("GEMINI_API_KEY"):
-        print("❌ Error: GEMINI_API_KEY not found in environment variables")
-        print("Please create a .env file with your OpenAI API key")
-        print("See .env.example for reference")
+        print("Error: GEMINI_API_KEY not found in environment variables")
+        print("Please create a .env file — see .env.example for reference")
         return
 
     print("=" * 80)
-    print("🌍 MULTI-AGENT RAG TRAVEL PLANNER")
+    print("  MULTI-AGENT AI TRAVEL PLANNER v2.0")
+    print("  Real-time data from APIs + AI-powered analysis")
     print("=" * 80)
     print()
 
-    # Sample user requests (try different ones!)
+    # Sample requests
     user_requests = [
-        # Example 1: Romantic honeymoon
         """
         Plan a 10-day luxury honeymoon to Italy, focusing on food and history.
         We want to visit Rome and Florence, staying in 5-star hotels.
         We love wine, authentic Italian cuisine, Renaissance art, and romantic experiences.
         Budget is flexible for a once-in-a-lifetime trip.
         """,
-
-        # Example 2: Solo art lover
         """
         Plan a 5-day trip to Paris for a solo traveler who loves art and food.
         Mid-range budget around $200/day for accommodation.
         Interested in visiting museums (especially Impressionist art),
         trying authentic French cuisine, and exploring charming neighborhoods.
         """,
-
-        # Example 3: Family adventure
         """
         Plan a 7-day family trip to Barcelona with 2 adults and 2 kids (ages 8 and 12).
         We want a mix of culture, beaches, and kid-friendly activities.
         Budget-conscious but willing to splurge on special experiences.
-        Interested in Gaudí architecture, local food markets, and Mediterranean beaches.
+        Interested in Gaudi architecture, local food markets, and Mediterranean beaches.
         """,
     ]
 
-    # Select which request to use (change index to try different ones)
     selected_request = user_requests[1]  # Paris solo trip
 
-    print("📝 User Request:")
+    print("User Request:")
     print("-" * 80)
     print(selected_request.strip())
     print("-" * 80)
     print()
 
-    # Create and run the crew
     try:
-        crew = create_travel_crew(selected_request)
+        from backend.crew.orchestrator import run_travel_pipeline
 
-        print("🚀 Starting travel planning process...\n")
+        print("Starting travel planning pipeline...\n")
+
+        async def cli_progress(step_key: str, label: str, status: str):
+            icon = "..." if status == "running" else "[done]"
+            print(f"  {icon} {label}")
+
+        result = await run_travel_pipeline(
+            user_request=selected_request,
+            progress_callback=cli_progress,
+        )
+
+        print()
+        print("=" * 80)
+        print("  TRAVEL PLANNING COMPLETE!")
         print("=" * 80)
         print()
-
-        # Execute the crew
-        result = crew.kickoff()
-
-        print()
-        print("=" * 80)
-        print("✅ TRAVEL PLANNING COMPLETE!")
-        print("=" * 80)
-        print()
-        print("📄 FINAL ITINERARY:")
-        print("=" * 80)
         print(result)
         print("=" * 80)
 
-        # Optionally save to file
+        # Save to file
         output_file = "travel_itinerary.md"
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(f"# Travel Itinerary\n\n")
             f.write(f"## Original Request\n\n{selected_request}\n\n")
             f.write(f"## Complete Itinerary\n\n{result}\n")
 
-        print(f"\n💾 Itinerary saved to: {output_file}")
+        print(f"\nItinerary saved to: {output_file}")
 
     except Exception as e:
-        print(f"\n❌ Error during execution: {str(e)}")
+        print(f"\nError during execution: {e}")
         import traceback
         traceback.print_exc()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

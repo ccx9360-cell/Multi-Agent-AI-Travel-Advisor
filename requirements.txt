@@ -1,12 +1,20 @@
-# Install CrewAI with tools - it will handle most dependencies
+# Core AI framework
 crewai[tools]
 
-# Additional utilities
-python-dotenv
-pandas
-tiktoken
+# LLM & RAG
+langchain-community
+langchain-openai
+langchain-text-splitters
+chromadb
+
+# HTTP client for API services
+httpx
 
 # Backend API
 fastapi
 uvicorn
 websockets
+
+# Utilities
+python-dotenv
+pydantic
