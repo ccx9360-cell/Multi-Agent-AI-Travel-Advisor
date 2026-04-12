@@ -4,7 +4,7 @@ These provide a consistent format regardless of which API provider returned the 
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import List, Optional
 from datetime import date
 
 
@@ -23,10 +23,10 @@ class FlightSegment(BaseModel):
 
 class FlightOption(BaseModel):
     provider: str  # "amadeus" or "serpapi"
-    segments: list[FlightSegment]
+    segments: List[FlightSegment]
     total_duration: str
     layovers: int
-    layover_cities: list[str] = []
+    layover_cities: List[str] = []
     price_per_person: float
     total_price: float
     currency: str = "USD"
@@ -41,7 +41,7 @@ class FlightSearchResult(BaseModel):
     return_date: Optional[str] = None
     travelers: int
     cabin_class: str
-    options: list[FlightOption] = []
+    options: List[FlightOption] = []
     source: str = ""  # which API provided the data
 
 
@@ -58,7 +58,7 @@ class AccommodationOption(BaseModel):
     currency: str = "USD"
     neighborhood: str = ""
     distance_to_center_km: Optional[float] = None
-    amenities: list[str] = []
+    amenities: List[str] = []
     room_type: str = ""
     cancellation_policy: str = ""
     breakfast_included: bool = False
@@ -72,7 +72,7 @@ class AccommodationSearchResult(BaseModel):
     check_out: str
     nights: int
     guests: int
-    options: list[AccommodationOption] = []
+    options: List[AccommodationOption] = []
     source: str = ""
 
 
@@ -96,10 +96,10 @@ class ActivityOption(BaseModel):
 
 class ActivitySearchResult(BaseModel):
     destination: str
-    interests: list[str]
-    attractions: list[ActivityOption] = []  # from Google Places
-    tours: list[ActivityOption] = []  # from Viator
-    dining: list[ActivityOption] = []  # from Yelp
+    interests: List[str]
+    attractions: List[ActivityOption] = []  # from Google Places
+    tours: List[ActivityOption] = []  # from Viator
+    dining: List[ActivityOption] = []  # from Yelp
 
 
 # ── Logistics Models ──────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ class TransportRoute(BaseModel):
     destination: str
     distance: str
     duration: str
-    steps: list[str] = []
+    steps: List[str] = []
     fare: Optional[str] = None
 
 
@@ -136,7 +136,7 @@ class CountryInfo(BaseModel):
     capital: str
     currency_name: str
     currency_code: str
-    languages: list[str]
+    languages: List[str]
     timezone: str = ""
     calling_code: str = ""
     visa_info: str = ""
@@ -147,8 +147,8 @@ class CountryInfo(BaseModel):
 
 
 class LogisticsResult(BaseModel):
-    routes: list[TransportRoute] = []
-    weather: list[WeatherForecast] = []
+    routes: List[TransportRoute] = []
+    weather: List[WeatherForecast] = []
     currency: Optional[CurrencyInfo] = None
     country: Optional[CountryInfo] = None
 
@@ -161,16 +161,16 @@ class TravelRequest(BaseModel):
 
 class TravelPlanParams(BaseModel):
     """Structured parameters extracted from natural language request by AI."""
-    destinations: list[str]
+    destinations: List[str]
     origin: str = ""
     departure_date: Optional[str] = None
     return_date: Optional[str] = None
     duration_days: int = 7
     travelers: int = 1
     budget_level: str = "mid-range"  # budget, mid-range, luxury
-    interests: list[str] = []
+    interests: List[str] = []
     cabin_class: str = "economy"
-    special_requirements: list[str] = []
+    special_requirements: List[str] = []
 
 
 # ── Response Models ───────────────────────────────────────────────────────────

@@ -1,164 +1,87 @@
-# 🚀 Quick Start Guide
+# Quick Start Guide
 
-Get your Multi-Agent RAG Travel Planner running in 5 minutes!
+Get the Multi-Agent AI Travel Planner running in 5 minutes.
 
 ## Step 1: Install Dependencies
 
 ```bash
+cd "Multi Agent AI Travel Agent"
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-This installs:
-- CrewAI (agent framework)
-- LangChain (RAG components)
-- ChromaDB (vector database)
-- OpenAI (LLM)
-
-## Step 2: Set Up Environment
+## Step 2: Configure API Keys
 
 ```bash
-# Run setup script
-python setup.py
+cp .env.example .env
 ```
 
-This creates necessary directories and checks your installation.
+Edit `.env` and add at minimum:
 
-## Step 3: Add Your OpenAI API Key
+```
+GEMINI_API_KEY=your_gemini_key        # Required — needs paid plan
+AMADEUS_API_KEY=your_amadeus_key      # Free tier: 2,000 calls/month
+AMADEUS_API_SECRET=your_amadeus_secret
+GOOGLE_PLACES_API_KEY=your_google_key # $200/month free credit
+OPENWEATHER_API_KEY=your_weather_key  # Free: 1,000 calls/day
+```
 
-Edit the `.env` file:
+See [README.md](README.md#api-keys-required) for the full list.
+
+## Step 3: Run the Backend
 
 ```bash
-OPENAI_API_KEY=sk-your-actual-api-key-here
+uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload --reload-exclude "venv/*" --reload-exclude "data/*"
 ```
 
-Get your API key from: https://platform.openai.com/api-keys
+## Step 4: Run the Frontend
 
-## Step 4: Test Individual Tools (Optional)
+Open a new terminal:
 
 ```bash
-python test_tools.py
+cd frontend
+npm install
+npm run dev
 ```
 
-This tests each tool independently to make sure everything works.
+Open http://localhost:5173 in your browser.
 
-## Step 5: Run the Planner!
+## Step 5: Plan a Trip
+
+Type a request like:
+```
+Plan a 5-day trip to Paris for a solo traveler who loves art and food.
+Mid-range budget around $200/day for accommodation.
+```
+
+## What Happens
+
+1. **Travel Manager** (AI) parses your request
+2. **API Services** fetch real flights, hotels, activities, weather in parallel
+3. **Knowledge Expert** (AI + RAG) provides cultural tips
+4. **Itinerary Compiler** (AI) creates your personalized day-by-day plan
+
+## CLI Mode (No Frontend)
 
 ```bash
 python main.py
 ```
 
-The system will:
-1. Initialize all tools and agents
-2. Process the sample travel request
-3. Generate a complete itinerary
-4. Save it to `travel_itinerary.md`
+Edit the `selected_request` in [main.py](main.py) to change the travel request.
 
-## 📝 Customize Your Request
+## Troubleshooting
 
-Edit [main.py](main.py) around line 155:
+| Problem | Solution |
+|---------|----------|
+| Rate limit / 429 error | Gemini free tier exhausted. Enable paid plan or wait 24h |
+| API key expired | Get new key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| Server keeps reloading | Add `--reload-exclude "venv/*"` to uvicorn command |
+| ModuleNotFoundError | `source venv/bin/activate && pip install -r requirements.txt` |
+| No flight/hotel results | Check that the relevant API keys are in `.env` |
 
-```python
-# Change this to test different requests
-selected_request = user_requests[0]  # Try 0, 1, or 2
+## Next Steps
 
-# Or add your own:
-custom_request = """
-Plan a 10-day adventure trip to Japan focusing on traditional culture
-and modern technology. I want to visit Tokyo, Kyoto, and Osaka...
-"""
-```
-
-## 🎯 What Happens When You Run It?
-
-1. **Travel Manager** analyzes your request
-2. **Flight Agent** searches for flights
-3. **Accommodation Agent** finds hotels
-4. **Activity Agent** discovers tours and experiences
-5. **Logistics Agent** plans transportation
-6. **Knowledge Agent** provides cultural tips (using RAG!)
-7. **Itinerary Compiler** creates your final plan
-
-## 📊 Expected Output
-
-You'll see:
-- Real-time agent thinking and collaboration in the console
-- A complete day-by-day itinerary at the end
-- A saved markdown file with all details
-
-Example:
-```
-🌍 MULTI-AGENT RAG TRAVEL PLANNER
-===============================================
-
-🔧 Initializing tools...
-✅ All tools initialized successfully
-
-👥 Creating agent crew...
-✅ Agents created successfully
-
-🚀 Starting travel planning process...
-
-[Agents work together...]
-
-✅ TRAVEL PLANNING COMPLETE!
-
-📄 FINAL ITINERARY:
-[Your personalized travel plan]
-
-💾 Itinerary saved to: travel_itinerary.md
-```
-
-## 🔧 Troubleshooting
-
-### "OPENAI_API_KEY not found"
-- Make sure you created `.env` file
-- Add your actual API key (starts with `sk-`)
-
-### "ModuleNotFoundError"
-- Run: `pip install -r requirements.txt`
-
-### ChromaDB Errors
-- Delete `data/chroma_db/` folder
-- Run the script again
-
-## 🎓 Understanding the Code
-
-### Key Files:
-
-- **[main.py](main.py)** - Main orchestration, start here
-- **[tools/](tools/)** - All custom tools (flights, hotels, RAG)
-- **[agents/agents.py](agents/agents.py)** - Agent definitions
-- **[agents/tasks.py](agents/tasks.py)** - Task definitions
-
-### How RAG Works:
-
-1. **Documents** in `data/travel_knowledge/` (auto-created)
-2. **ChromaDB** creates vector embeddings
-3. **Agents query** the knowledge base
-4. **Relevant info** retrieved and used in planning
-
-## 🚀 Next Steps
-
-1. **Try different requests** - Edit main.py
-2. **Add travel documents** - Put .txt files in `data/travel_knowledge/`
-3. **Integrate real APIs** - Replace mock data in tools
-4. **Customize agents** - Edit roles and backstories
-
-## 💡 Pro Tips
-
-- The more detailed your request, the better the itinerary
-- Mention specific interests (food, history, art, adventure)
-- Specify budget level for better recommendations
-- Check the saved .md file for the complete formatted itinerary
-
-## 📚 Need Help?
-
-- Check the main [README.md](README.md) for detailed documentation
-- Review code comments in each file
-- Visit CrewAI docs: https://docs.crewai.com/
-
----
-
-**Ready to plan your next adventure?** 🌍✈️
-
-Run: `python main.py`
+- [README.md](README.md) — Full documentation and all API key details
+- [ARCHITECTURE.md](ARCHITECTURE.md) — System design and data flow
+- [FILE_STRUCTURE.md](FILE_STRUCTURE.md) — Complete file tree explained

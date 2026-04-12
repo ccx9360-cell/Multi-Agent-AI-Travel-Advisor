@@ -4,7 +4,7 @@ Docs: https://rapidapi.com/3b-data-3b-data-default/api/airbnb19
 """
 
 import logging
-from typing import Optional
+from typing import List, Optional
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import AccommodationOption
@@ -29,7 +29,7 @@ class AirbnbClient(BaseAPIClient):
         check_in: str,
         check_out: str,
         guests: int = 2,
-    ) -> list[AccommodationOption]:
+    ) -> List[AccommodationOption]:
         """Search Airbnb listings via RapidAPI."""
         if not settings.airbnb_api_key:
             logger.warning("Airbnb API key not configured")
@@ -50,7 +50,7 @@ class AirbnbClient(BaseAPIClient):
 
         return self._parse_results(data, check_in, check_out)
 
-    def _parse_results(self, data: dict, check_in: str, check_out: str) -> list[AccommodationOption]:
+    def _parse_results(self, data: dict, check_in: str, check_out: str) -> List[AccommodationOption]:
         results = []
         listings = data.get("data", [])
         if isinstance(listings, dict):

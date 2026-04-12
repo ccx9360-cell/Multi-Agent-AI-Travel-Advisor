@@ -4,7 +4,7 @@ Docs: https://developers.amadeus.com/self-service/category/flights/api-doc/fligh
 """
 
 import logging
-from typing import Optional
+from typing import List, Optional
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import FlightOption, FlightSegment
@@ -48,7 +48,7 @@ class AmadeusClient(BaseAPIClient):
         return_date: Optional[str] = None,
         travelers: int = 1,
         cabin_class: str = "ECONOMY",
-    ) -> list[FlightOption]:
+    ) -> List[FlightOption]:
         """Search flights via Amadeus Flight Offers Search API."""
         if not self._access_token:
             authenticated = await self._authenticate()
@@ -81,7 +81,7 @@ class AmadeusClient(BaseAPIClient):
 
         return self._parse_offers(data["data"], travelers)
 
-    def _parse_offers(self, offers: list, travelers: int) -> list[FlightOption]:
+    def _parse_offers(self, offers: list, travelers: int) -> List[FlightOption]:
         results = []
         for offer in offers:
             try:

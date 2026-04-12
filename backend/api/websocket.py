@@ -6,6 +6,7 @@ import asyncio
 import uuid
 import logging
 from datetime import datetime
+from typing import Dict
 from fastapi import WebSocket, WebSocketDisconnect
 
 from backend.crew.orchestrator import run_travel_pipeline
@@ -26,7 +27,7 @@ AGENT_STEPS = [
 
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: dict[str, WebSocket] = {}
+        self.active_connections: Dict[str, WebSocket] = {}
 
     async def connect(self, websocket: WebSocket, session_id: str):
         await websocket.accept()

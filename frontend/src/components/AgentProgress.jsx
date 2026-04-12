@@ -1,8 +1,5 @@
 import {
-  Plane,
-  Hotel,
-  MapPin,
-  Bus,
+  Download,
   BookOpen,
   FileText,
   ClipboardList,
@@ -13,22 +10,9 @@ import {
 
 const AGENT_ICONS = {
   planning: ClipboardList,
-  flights: Plane,
-  accommodation: Hotel,
-  activities: MapPin,
-  logistics: Bus,
+  data_fetch: Download,
   knowledge: BookOpen,
   compilation: FileText,
-};
-
-const AGENT_COLORS = {
-  planning: "blue",
-  flights: "sky",
-  accommodation: "amber",
-  activities: "green",
-  logistics: "purple",
-  knowledge: "teal",
-  compilation: "indigo",
 };
 
 function StatusIcon({ status }) {

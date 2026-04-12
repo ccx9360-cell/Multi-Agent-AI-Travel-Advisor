@@ -4,7 +4,7 @@ Docs: https://rapidapi.com/DataCrawler/api/booking-com15
 """
 
 import logging
-from typing import Optional
+from typing import List, Optional
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import AccommodationOption
@@ -41,7 +41,7 @@ class BookingClient(BaseAPIClient):
         check_out: str,
         guests: int = 2,
         rooms: int = 1,
-    ) -> list[AccommodationOption]:
+    ) -> List[AccommodationOption]:
         """Search hotels via Booking.com RapidAPI."""
         if not settings.booking_api_key:
             logger.warning("Booking.com API key not configured")
@@ -72,7 +72,7 @@ class BookingClient(BaseAPIClient):
 
         return self._parse_results(data["data"], check_in, check_out)
 
-    def _parse_results(self, data: dict, check_in: str, check_out: str) -> list[AccommodationOption]:
+    def _parse_results(self, data: dict, check_in: str, check_out: str) -> List[AccommodationOption]:
         results = []
         hotels = data.get("hotels", [])
 

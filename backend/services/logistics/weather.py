@@ -7,6 +7,7 @@ import logging
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import WeatherForecast
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class WeatherClient(BaseAPIClient):
     def __init__(self):
         super().__init__(base_url=settings.openweather_base_url)
 
-    async def get_forecast(self, city: str) -> list[WeatherForecast]:
+    async def get_forecast(self, city: str) -> List[WeatherForecast]:
         """Get 5-day weather forecast for a city."""
         if not settings.openweather_api_key:
             logger.warning("OpenWeatherMap API key not configured")
@@ -35,7 +36,7 @@ class WeatherClient(BaseAPIClient):
 
         return self._parse_forecast(data["list"])
 
-    def _parse_forecast(self, forecast_list: list) -> list[WeatherForecast]:
+    def _parse_forecast(self, forecast_list: list) -> List[WeatherForecast]:
         # Group by date and take one reading per day (noon)
         daily = {}
         for entry in forecast_list:

@@ -7,6 +7,7 @@ import logging
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import ActivityOption
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +34,9 @@ class YelpClient(BaseAPIClient):
     async def search_businesses(
         self,
         destination: str,
-        interests: list[str],
+        interests: List[str],
         max_results: int = 10,
-    ) -> list[ActivityOption]:
+    ) -> List[ActivityOption]:
         """Search Yelp for restaurants and local businesses."""
         if not settings.yelp_api_key:
             logger.warning("Yelp API key not configured")

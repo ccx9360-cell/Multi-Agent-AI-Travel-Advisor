@@ -4,6 +4,7 @@ Docs: https://docs.viator.com/partner-api/technical
 """
 
 import logging
+from typing import List, Optional
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import ActivityOption
@@ -23,7 +24,7 @@ class ViatorClient(BaseAPIClient):
             },
         )
 
-    async def _get_destination_id(self, city: str) -> str | None:
+    async def _get_destination_id(self, city: str) -> Optional[str]:
         """Resolve city name to Viator destination ID."""
         data = await self._get("/search/freetext", params={"searchTerm": city})
         if not data:
@@ -36,9 +37,9 @@ class ViatorClient(BaseAPIClient):
     async def search_experiences(
         self,
         destination: str,
-        interests: list[str],
+        interests: List[str],
         max_results: int = 10,
-    ) -> list[ActivityOption]:
+    ) -> List[ActivityOption]:
         """Search Viator for tours and experiences."""
         if not settings.viator_api_key:
             logger.warning("Viator API key not configured")
@@ -70,7 +71,7 @@ class ViatorClient(BaseAPIClient):
 
         return self._parse_results(data)
 
-    def _parse_results(self, data: dict) -> list[ActivityOption]:
+    def _parse_results(self, data: dict) -> List[ActivityOption]:
         results = []
         products = data.get("products", [])
 

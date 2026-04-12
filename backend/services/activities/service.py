@@ -9,6 +9,7 @@ from backend.services.activities.google_places import GooglePlacesClient
 from backend.services.activities.viator import ViatorClient
 from backend.services.activities.yelp import YelpClient
 from backend.models.schemas import ActivitySearchResult
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class ActivityService:
     async def search(
         self,
         destination: str,
-        interests: list[str],
+        interests: List[str],
     ) -> ActivitySearchResult:
         """Search all providers in parallel, categorize results."""
         logger.info(f"Searching activities in {destination} for interests: {interests}")

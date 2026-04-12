@@ -4,7 +4,7 @@ Docs: https://serpapi.com/google-flights-api
 """
 
 import logging
-from typing import Optional
+from typing import List, Optional
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import FlightOption, FlightSegment
@@ -25,7 +25,7 @@ class SerpApiFlightsClient(BaseAPIClient):
         return_date: Optional[str] = None,
         travelers: int = 1,
         cabin_class: str = "economy",
-    ) -> list[FlightOption]:
+    ) -> List[FlightOption]:
         """Search flights via SerpApi Google Flights engine."""
         if not settings.serpapi_key:
             logger.warning("SerpApi key not configured")
@@ -53,7 +53,7 @@ class SerpApiFlightsClient(BaseAPIClient):
 
         return self._parse_results(data, travelers, cabin_class)
 
-    def _parse_results(self, data: dict, travelers: int, cabin_class: str) -> list[FlightOption]:
+    def _parse_results(self, data: dict, travelers: int, cabin_class: str) -> List[FlightOption]:
         results = []
 
         # SerpApi returns best_flights and other_flights

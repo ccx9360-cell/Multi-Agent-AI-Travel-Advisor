@@ -1,430 +1,207 @@
-# 🌍 Multi-Agent RAG Travel Planner
+# Multi-Agent AI Travel Planner v2.0
 
-A sophisticated AI travel planning system that uses multiple specialized agents working together to create comprehensive, personalized travel itineraries. Built with CrewAI and featuring RAG (Retrieval-Augmented Generation) for up-to-date travel information.
+An AI travel planning system that combines **real-time API data** with **AI-powered analysis** to create personalized travel itineraries. Built with CrewAI, featuring 11 external API integrations and RAG for travel knowledge.
 
-## 🎯 Features
+## Key Concepts
 
-- **Multi-Agent Architecture**: 7 specialized AI agents collaborate to plan your trip
-- **RAG Implementation**: ChromaDB vector database for retrieving travel knowledge
-- **Real-time Tools**: Flight, hotel, and activity search capabilities (mock APIs, ready for production integration)
-- **Comprehensive Planning**: Covers flights, accommodations, activities, logistics, and cultural tips
-- **Natural Language Input**: Describe your dream trip in plain English
+- **3 AI Agents** handle reasoning: parsing requests, cultural knowledge, and itinerary compilation
+- **4 API Services** fetch real-time data: flights, accommodation, activities, and logistics
+- **RAG Knowledge Base** provides cultural tips, visa info, and practical advice via ChromaDB
+- **AI only does analysis** — all travel data comes from real APIs, not hallucinated by the LLM
 
-## 🏗️ System Architecture
-
-### Agents
-
-1. **Travel Planning Manager** (Orchestrator)
-   - Analyzes user requests and breaks them down
-   - Coordinates all other agents
-   - Ensures comprehensive coverage
-
-2. **Flight Research Specialist**
-   - Finds best flight options
-   - Compares prices, durations, and layovers
-   - Considers traveler preferences
-
-3. **Accommodation Specialist**
-   - Researches hotels and lodging
-   - Matches properties to budget and preferences
-   - Considers location and amenities
-
-4. **Activities & Experiences Curator**
-   - Finds tours, attractions, and experiences
-   - Matches activities to interests
-   - Balances must-see sights with hidden gems
-
-5. **Travel Logistics Coordinator**
-   - Plans ground transportation
-   - Optimizes routes and timing
-   - Handles practical details
-
-6. **Travel Knowledge Expert**
-   - Provides visa, cultural, and practical information
-   - Uses RAG to access comprehensive travel database
-   - Answers destination-specific questions
-
-7. **Itinerary Compiler & Optimizer**
-   - Synthesizes all research into final plan
-   - Creates day-by-day itinerary
-   - Ensures logical flow and optimal timing
-
-### Communication Flow
+## Architecture
 
 ```
 User Request
-     ↓
-Travel Manager (analyzes & plans)
-     ↓
-   ┌─────────────────────────────────┐
-   ↓         ↓         ↓         ↓         ↓
-Flight   Hotels   Activities  Logistics  Knowledge
-   ↓         ↓         ↓         ↓         ↓
-   └─────────────────────────────────┘
-                  ↓
-        Itinerary Compiler
-                  ↓
-         Final Itinerary
+    |
+[AI] Travel Planning Manager --- parses request into structured params
+    |
+[API] 4 services fetch in parallel (no AI, pure HTTP)
+    |--- Flights: Amadeus + SerpApi (fallback)
+    |--- Accommodation: Booking.com + Airbnb
+    |--- Activities: Google Places + Viator + Yelp
+    |--- Logistics: Google Maps + OpenWeatherMap + Currency + Country Info
+    |
+[AI] Travel Knowledge Expert --- RAG for cultural/visa/practical info
+    |
+[AI] Itinerary Compiler --- synthesizes ALL real data into day-by-day plan
+    |
+Final Itinerary (with real prices, real hotels, booking links)
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.8+
-- OpenAI API key
+- Python 3.9+
+- API keys (see [API Keys Required](#api-keys-required) below)
 
 ### Installation
 
-1. **Clone or download this project**
-
 ```bash
+# Clone the project
 cd "Multi Agent AI Travel Agent"
-```
 
-2. **Install dependencies**
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+# or: venv\Scripts\activate  # Windows
 
-```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Set up environment
+cp .env.example .env
+# Edit .env and add your API keys
 ```
 
-3. **Set up environment**
+### Running
 
+**Backend:**
 ```bash
-# Run setup script
-python setup.py
-
-# Edit .env file and add your API key
-# .env
-OPENAI_API_KEY=your_openai_api_key_here
+uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload --reload-exclude "venv/*" --reload-exclude "data/*"
 ```
 
-4. **Run the planner**
+**Frontend** (separate terminal):
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
+**CLI mode** (no frontend needed):
 ```bash
 python main.py
 ```
 
-## 📁 Project Structure
+## API Keys Required
+
+### Required
+| Key | Purpose | Get it from |
+|-----|---------|-------------|
+| `GEMINI_API_KEY` | AI agents (needs paid plan) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+
+### Flight APIs (need at least one)
+| Key | Purpose | Get it from |
+|-----|---------|-------------|
+| `AMADEUS_API_KEY` + `AMADEUS_API_SECRET` | Primary flight search | [developers.amadeus.com](https://developers.amadeus.com/) |
+| `SERPAPI_KEY` | Fallback flight search | [serpapi.com](https://serpapi.com/) |
+
+### Accommodation APIs (need at least one)
+| Key | Purpose | Get it from |
+|-----|---------|-------------|
+| `BOOKING_API_KEY` | Hotels (Booking.com via RapidAPI) | [rapidapi.com](https://rapidapi.com/DataCrawler/api/booking-com15) |
+| `AIRBNB_API_KEY` | Rentals (Airbnb via RapidAPI) | [rapidapi.com](https://rapidapi.com/3b-data-3b-data-default/api/airbnb19) |
+
+### Activity APIs (need at least one)
+| Key | Purpose | Get it from |
+|-----|---------|-------------|
+| `GOOGLE_PLACES_API_KEY` | Attractions & restaurants | [console.cloud.google.com](https://console.cloud.google.com/) |
+| `VIATOR_API_KEY` | Bookable tours | [docs.viator.com](https://docs.viator.com/) |
+| `YELP_API_KEY` | Dining (5,000 calls/day free) | [yelp.com/developers](https://www.yelp.com/developers/) |
+
+### Logistics APIs (all free)
+| Key | Purpose | Get it from |
+|-----|---------|-------------|
+| `GOOGLE_MAPS_API_KEY` | Transport routes | [console.cloud.google.com](https://console.cloud.google.com/) |
+| `OPENWEATHER_API_KEY` | Weather forecast | [openweathermap.org](https://openweathermap.org/api) |
+
+### Optional
+| Key | Purpose |
+|-----|---------|
+| `OPENAI_API_KEY` | RAG embeddings (only if using knowledge base) |
+| `EXCHANGE_RATE_API_KEY` | Currency rates (fallback uses free API without key) |
+
+Services gracefully skip any provider whose key isn't configured.
+
+## Project Structure
 
 ```
-Multi Agent AI Travel Agent/
-│
-├── main.py                          # Main orchestration script
-├── setup.py                         # Setup and initialization
-├── requirements.txt                 # Python dependencies
-├── .env.example                     # Environment variables template
-│
-├── agents/
-│   ├── agents.py                   # Agent definitions
-│   └── tasks.py                    # Task definitions
-│
-├── tools/
-│   ├── flight_search_tool.py      # Flight search API tool
-│   ├── hotel_search_tool.py       # Hotel search API tool
-│   ├── activity_search_tool.py    # Activity search API tool
-│   └── travel_knowledge_rag_tool.py # RAG tool with ChromaDB
-│
-└── data/
-    ├── travel_knowledge/           # Travel documents for RAG
-    └── chroma_db/                  # ChromaDB vector store
+backend/
+├── app.py                          # FastAPI entry point
+├── config/
+│   └── settings.py                 # All API keys & service URLs
+├── api/
+│   ├── routes.py                   # REST endpoints
+│   └── websocket.py                # WebSocket + progress updates
+├── services/                       # Pure API calls, NO AI
+│   ├── flights/
+│   │   ├── amadeus.py              # Amadeus API (primary)
+│   │   ├── serpapi.py              # SerpApi Google Flights (fallback)
+│   │   └── service.py              # FlightService coordinator
+│   ├── accommodation/
+│   │   ├── booking.py              # Booking.com via RapidAPI
+│   │   ├── airbnb.py              # Airbnb via RapidAPI
+│   │   └── service.py             # AccommodationService coordinator
+│   ├── activities/
+│   │   ├── google_places.py        # Attractions & restaurants
+│   │   ├── viator.py              # Bookable tours
+│   │   ├── yelp.py                # Dining recommendations
+│   │   └── service.py             # ActivityService coordinator
+│   ├── logistics/
+│   │   ├── google_maps.py         # Directions & routes
+│   │   ├── weather.py             # OpenWeatherMap
+│   │   ├── currency.py            # Exchange rates
+│   │   ├── country_info.py        # REST Countries + Travelbriefing
+│   │   └── service.py             # LogisticsService coordinator
+│   └── knowledge/
+│       └── rag.py                 # ChromaDB RAG
+├── agents/                         # Only 3 AI agents
+│   ├── llm.py                     # Gemini LLM factory
+│   ├── definitions.py             # Travel Manager, Knowledge Expert, Compiler
+│   ├── tasks.py                   # Task definitions
+│   └── tools.py                   # CrewAI tool wrapper (RAG only)
+├── crew/
+│   └── orchestrator.py            # Main pipeline
+├── models/
+│   └── schemas.py                 # Normalized Pydantic models
+frontend/                           # React + Vite UI
+data/
+├── travel_knowledge/              # RAG documents (.txt)
+└── chroma_db/                     # Vector store (auto-generated)
+main.py                             # CLI entry point
 ```
 
-## 🛠️ How It Works
+## How It Works
 
-### 1. Tools (RAG + API)
+### The Pipeline (2-3 AI calls instead of 15-20)
 
-#### Custom API Tools
+1. **AI Step 1** — Travel Manager parses natural language into structured parameters (destinations, dates, budget, interests)
+2. **API Step** — 4 services fetch real data in parallel via `asyncio.gather` (flights, hotels, activities, logistics) — pure HTTP, no AI
+3. **AI Step 2** — Knowledge Expert queries RAG for cultural/visa/practical info
+4. **AI Step 3** — Itinerary Compiler takes ALL real API data + knowledge and creates a personalized day-by-day plan
 
-Each tool follows the CrewAI `BaseTool` pattern:
+### Adding Travel Knowledge
 
-```python
-from crewai_tools import BaseTool
-from pydantic import BaseModel, Field
+Add `.txt` files to `data/travel_knowledge/`. Delete `data/chroma_db/` to force re-indexing. The RAG system automatically indexes new documents on next run.
 
-class FlightSearchInput(BaseModel):
-    origin: str = Field(..., description="Origin city")
-    destination: str = Field(..., description="Destination city")
-    # ... more fields
+## Tech Stack
 
-class FlightSearchTool(BaseTool):
-    name: str = "Flight Search Tool"
-    description: str = "Searches for flights..."
-    args_schema: Type[BaseModel] = FlightSearchInput
+- **CrewAI** — Multi-agent orchestration
+- **Google Gemini** — LLM (via LiteLLM)
+- **FastAPI** — REST + WebSocket API
+- **httpx** — Async HTTP client for all API services
+- **ChromaDB** — Vector database for RAG
+- **React + Vite** — Frontend
+- **Pydantic** — Data models and validation
 
-    def _run(self, origin: str, destination: str, ...) -> str:
-        # API call logic here (currently mocked)
-        return formatted_results
-```
+## Troubleshooting
 
-#### RAG Tool with ChromaDB
+### "Rate limit error" / "429" / "RESOURCE_EXHAUSTED"
+Your Gemini free tier quota is exhausted. Enable billing at [aistudio.google.com](https://aistudio.google.com/) or wait for daily reset.
 
-```python
-class TravelKnowledgeRAGTool(BaseTool):
-    # Initializes ChromaDB vector store
-    # Loads travel documents
-    # Performs similarity search
+### "API key expired"
+Generate a new key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and update `.env`.
 
-    def _run(self, query: str, destination: str = None) -> str:
-        results = self._vectorstore.similarity_search(query, k=3)
-        return formatted_results
-```
+### Server reloads during execution
+Run with: `uvicorn backend.app:app --reload --reload-exclude "venv/*" --reload-exclude "data/*"`
 
-### 2. Agent Creation
+### "ModuleNotFoundError"
+Activate your venv and run: `pip install -r requirements.txt`
 
-```python
-agent = Agent(
-    role="Flight Research Specialist",
-    goal="Find the best flight options...",
-    backstory="You are a flight booking expert...",
-    tools=[flight_search_tool],
-    verbose=True,
-    allow_delegation=False
-)
-```
+### ChromaDB errors
+Delete `data/chroma_db/` and run again.
 
-### 3. Task Definition
+## License
 
-```python
-task = Task(
-    description="Research and recommend flight options...",
-    expected_output="Detailed flight recommendations...",
-    agent=flight_agent,
-    context=[planning_task]  # Use output from previous task
-)
-```
-
-### 4. Crew Orchestration
-
-```python
-crew = Crew(
-    agents=[manager, flight_agent, hotel_agent, ...],
-    tasks=[planning_task, flight_task, hotel_task, ...],
-    process=Process.sequential,
-    verbose=True
-)
-
-result = crew.kickoff()  # Execute the workflow
-```
-
-## 💡 Usage Examples
-
-### Example 1: Luxury Honeymoon
-
-```python
-user_request = """
-Plan a 10-day luxury honeymoon to Italy, focusing on food and history.
-We want to visit Rome and Florence, staying in 5-star hotels.
-We love wine, authentic Italian cuisine, Renaissance art, and romantic experiences.
-Budget is flexible for a once-in-a-lifetime trip.
-"""
-```
-
-### Example 2: Solo Art Trip
-
-```python
-user_request = """
-Plan a 5-day trip to Paris for a solo traveler who loves art and food.
-Mid-range budget around $200/day for accommodation.
-Interested in visiting museums (especially Impressionist art),
-trying authentic French cuisine, and exploring charming neighborhoods.
-"""
-```
-
-### Example 3: Family Adventure
-
-```python
-user_request = """
-Plan a 7-day family trip to Barcelona with 2 adults and 2 kids (ages 8 and 12).
-We want a mix of culture, beaches, and kid-friendly activities.
-Budget-conscious but willing to splurge on special experiences.
-"""
-```
-
-## 🔧 Customization
-
-### Adding Your Own Travel Documents
-
-1. Create `.txt` files in `data/travel_knowledge/`
-2. Add destination guides, tips, or any travel information
-3. Run the script - ChromaDB will automatically index new documents
-
-Example document:
-
-```
-# Tokyo Travel Guide
-
-Best Time to Visit:
-- Spring (March-May): Cherry blossoms
-- Fall (September-November): Pleasant weather
-
-Transportation:
-- JR Pass: Unlimited train travel
-- Tokyo Metro: Efficient subway system
-...
-```
-
-### Integrating Real APIs
-
-Replace mock data in tool files:
-
-**Flight Search** - Integrate with:
-- Amadeus API: https://developers.amadeus.com/
-- Skyscanner API
-- Google Flights via SerpAPI
-
-**Hotel Search** - Integrate with:
-- Booking.com API
-- Hotels.com API
-- Airbnb API
-
-**Activities** - Integrate with:
-- GetYourGuide API
-- Viator API
-- TripAdvisor Experiences
-
-### Customizing Agents
-
-Edit `agents/agents.py`:
-
-```python
-def create_custom_agent(tools):
-    return Agent(
-        role="Your Custom Role",
-        goal="Your specific goal...",
-        backstory="Agent's background...",
-        tools=tools,
-        verbose=True
-    )
-```
-
-## 📊 Output
-
-The system generates:
-
-1. **Console Output**: Real-time agent collaboration and reasoning
-2. **Final Itinerary**: Comprehensive day-by-day plan
-3. **Saved File**: `travel_itinerary.md` with complete details
-
-Example output structure:
-
-```
-# Trip Overview
-- Destinations: Paris
-- Duration: 5 days
-- Dates: [Based on request]
-
-# Flight Details
-[Outbound and return flights with all details]
-
-# Day-by-Day Itinerary
-
-## Day 1: Arrival & Le Marais
-- Morning: Arrive at CDG, transfer to hotel
-- Afternoon: Explore Le Marais neighborhood
-- Evening: Dinner at traditional bistro
-
-[... continues for all days]
-
-# Budget Summary
-- Flights: $800
-- Accommodation: $1,000
-- Activities: $400
-- Food: $600
-Total: $2,800
-
-# Practical Information
-[Visa, currency, tips, packing list]
-```
-
-## 🧪 Testing Different Scenarios
-
-In `main.py`, change the `selected_request` index:
-
-```python
-user_requests = [
-    # Example 1: Luxury honeymoon
-    "...",
-    # Example 2: Solo art trip
-    "...",
-    # Example 3: Family adventure
-    "...",
-]
-
-selected_request = user_requests[0]  # Change index to test different requests
-```
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-1. **OpenAI API Key Error**
-   ```
-   Error: OPENAI_API_KEY not found
-   ```
-   - Solution: Add your key to `.env` file
-
-2. **ChromaDB Issues**
-   ```
-   Error initializing vector store
-   ```
-   - Solution: Delete `data/chroma_db/` and run again
-
-3. **Import Errors**
-   ```
-   ModuleNotFoundError: No module named 'crewai'
-   ```
-   - Solution: Run `pip install -r requirements.txt`
-
-## 🚀 Next Steps
-
-### Production Enhancements
-
-1. **Real API Integration**
-   - Replace mock data with actual API calls
-   - Add API key management
-   - Implement rate limiting and caching
-
-2. **Enhanced RAG**
-   - Add more travel documents
-   - Implement semantic search improvements
-   - Use different embedding models
-
-3. **User Interface**
-   - Build web interface (Streamlit/Flask)
-   - Add interactive itinerary editing
-   - Enable PDF export
-
-4. **Advanced Features**
-   - Multi-language support
-   - Real-time price tracking
-   - Collaborative planning for groups
-   - Integration with calendar apps
-
-5. **Error Handling**
-   - Retry logic for API failures
-   - Fallback options for unavailable services
-   - Better validation of user inputs
-
-## 📚 Learn More
-
-- **CrewAI Documentation**: https://docs.crewai.com/
-- **LangChain RAG**: https://python.langchain.com/docs/use_cases/question_answering/
-- **ChromaDB**: https://docs.trychroma.com/
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-You are free to use, modify, and distribute this software for personal or commercial purposes.
-
-## 🙋 Support
-
-For issues or questions:
-1. Check the troubleshooting section
-2. Review the code comments
-3. Consult CrewAI documentation
-
----
-
-**Happy Travels!** ✈️🌍🎉
+MIT License — see [LICENSE](LICENSE) for details.

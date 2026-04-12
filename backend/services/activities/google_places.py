@@ -4,6 +4,7 @@ Docs: https://developers.google.com/maps/documentation/places/web-service
 """
 
 import logging
+from typing import Dict, List, Optional
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import ActivityOption
@@ -30,9 +31,9 @@ class GooglePlacesClient(BaseAPIClient):
     async def search_places(
         self,
         destination: str,
-        interests: list[str],
+        interests: List[str],
         max_results: int = 10,
-    ) -> list[ActivityOption]:
+    ) -> List[ActivityOption]:
         """Search Google Places for attractions based on interests."""
         if not settings.google_places_api_key:
             logger.warning("Google Places API key not configured")
@@ -97,13 +98,13 @@ class GooglePlacesClient(BaseAPIClient):
         deduped.sort(key=lambda x: -x.rating)
         return deduped[:max_results]
 
-    def _price_level_to_amount(self, level) -> float | None:
+    def _price_level_to_amount(self, level) -> Optional[float]:
         if level is None:
             return None
         # Google's 0-4 scale to approximate USD
         return {0: 0, 1: 15, 2: 30, 3: 60, 4: 100}.get(level)
 
-    def _format_hours(self, hours_data) -> str | None:
+    def _format_hours(self, hours_data) -> Optional[str]:
         if not hours_data:
             return None
         if hours_data.get("open_now") is not None:

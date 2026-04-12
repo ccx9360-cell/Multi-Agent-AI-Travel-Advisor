@@ -245,7 +245,9 @@ async def run_travel_pipeline(
         verbose=True,
     )
 
-    planning_result = str(planning_crew.kickoff())
+    # crew.kickoff() is synchronous — run in thread to avoid blocking the event loop
+    loop = asyncio.get_event_loop()
+    planning_result = str(await loop.run_in_executor(None, planning_crew.kickoff))
     await notify("planning", "Travel Planning Manager", "completed")
     logger.info(f"Planning result:\n{planning_result[:500]}")
 
@@ -318,7 +320,7 @@ async def run_travel_pipeline(
         verbose=True,
     )
 
-    knowledge_result = str(knowledge_crew.kickoff())
+    knowledge_result = str(await loop.run_in_executor(None, knowledge_crew.kickoff))
     await notify("knowledge", "Travel Knowledge Expert", "completed")
 
     # ── Step 4: AI compiles final itinerary ──────────────────────────────
@@ -350,7 +352,7 @@ async def run_travel_pipeline(
         verbose=True,
     )
 
-    final_result = str(compilation_crew.kickoff())
+    final_result = str(await loop.run_in_executor(None, compilation_crew.kickoff))
     await notify("compilation", "Itinerary Compiler & Optimizer", "completed")
 
     logger.info(f"Itinerary compiled. Length: {len(final_result)} chars")

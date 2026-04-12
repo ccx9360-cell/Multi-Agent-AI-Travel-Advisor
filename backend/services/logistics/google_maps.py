@@ -7,6 +7,7 @@ import logging
 from backend.services.base import BaseAPIClient
 from backend.config.settings import settings
 from backend.models.schemas import TransportRoute
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class GoogleMapsClient(BaseAPIClient):
         origin: str,
         destination: str,
         mode: str = "transit",
-    ) -> list[TransportRoute]:
+    ) -> List[TransportRoute]:
         """Get directions between two places.
 
         Args:
@@ -46,7 +47,7 @@ class GoogleMapsClient(BaseAPIClient):
 
         return self._parse_routes(data.get("routes", []), origin, destination, mode)
 
-    def _parse_routes(self, routes: list, origin: str, destination: str, mode: str) -> list[TransportRoute]:
+    def _parse_routes(self, routes: list, origin: str, destination: str, mode: str) -> List[TransportRoute]:
         results = []
 
         for route in routes[:3]:
