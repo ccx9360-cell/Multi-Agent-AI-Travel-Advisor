@@ -15,7 +15,51 @@
   background: #94a3b8;
 }
 
-/* Markdown styles inside itinerary */
+/* ---- Animations ---- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(251, 146, 60, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(251, 146, 60, 0.8); }
+}
+@keyframes slideIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in { animation: fadeIn 0.5s ease-out; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-slide-in { animation: slideIn 0.3s ease-out; }
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Staggered card entrance */
+.stagger-1 { animation: fadeIn 0.5s ease-out 0.05s both; }
+.stagger-2 { animation: fadeIn 0.5s ease-out 0.1s both; }
+.stagger-3 { animation: fadeIn 0.5s ease-out 0.15s both; }
+.stagger-4 { animation: fadeIn 0.5s ease-out 0.2s both; }
+.stagger-5 { animation: fadeIn 0.5s ease-out 0.25s both; }
+.stagger-6 { animation: fadeIn 0.5s ease-out 0.3s both; }
+
+/* Pulse dot for active agent */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* ---- Markdown styles inside itinerary ---- */
 .itinerary-content {
   font-size: 0.9375rem;
   line-height: 1.75;
@@ -29,12 +73,19 @@
   border-bottom: 2px solid #f1f5f9;
   padding-bottom: 0.5rem;
 }
+.dark .itinerary-content h1 {
+  color: #f1f5f9;
+  border-bottom-color: #334155;
+}
 .itinerary-content h2 {
   font-size: 1.2rem;
   font-weight: 600;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   color: #334155;
+}
+.dark .itinerary-content h2 {
+  color: #e2e8f0;
 }
 .itinerary-content h3 {
   font-size: 1.05rem;
@@ -43,8 +94,14 @@
   margin-bottom: 0.5rem;
   color: #475569;
 }
+.dark .itinerary-content h3 {
+  color: #cbd5e1;
+}
 .itinerary-content p {
   margin-bottom: 0.5rem;
+}
+.dark .itinerary-content p {
+  color: #e2e8f0;
 }
 .itinerary-content ul,
 .itinerary-content ol {
@@ -55,14 +112,23 @@
   margin-bottom: 0.25rem;
   line-height: 1.6;
 }
+.dark .itinerary-content li {
+  color: #e2e8f0;
+}
 .itinerary-content strong {
   font-weight: 700;
   color: #1e293b;
+}
+.dark .itinerary-content strong {
+  color: #f8fafc;
 }
 .itinerary-content hr {
   margin: 1rem 0;
   border-color: #e2e8f0;
   border-width: 1px;
+}
+.dark .itinerary-content hr {
+  border-color: #475569;
 }
 .itinerary-content blockquote {
   border-left: 3px solid #f97316;
@@ -72,6 +138,10 @@
   border-radius: 0 0.5rem 0.5rem 0;
   font-size: 0.875rem;
   color: #9a3412;
+}
+.dark .itinerary-content blockquote {
+  background: rgba(249, 115, 22, 0.1);
+  color: #fdba74;
 }
 .itinerary-content img {
   max-width: 100%;
@@ -87,11 +157,18 @@
 .itinerary-content a:hover {
   color: #c2410c;
 }
+.dark .itinerary-content a {
+  color: #fb923c;
+}
 .itinerary-content code {
   background: #f1f5f9;
   padding: 0.15rem 0.4rem;
   border-radius: 0.25rem;
   font-size: 0.85em;
+}
+.dark .itinerary-content code {
+  background: #334155;
+  color: #e2e8f0;
 }
 .itinerary-content pre {
   background: #1e293b;
@@ -101,12 +178,6 @@
   overflow-x: auto;
   margin: 1rem 0;
 }
-
-/* Pulse animation for active agent */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-.animate-pulse-dot {
-  animation: pulse-dot 1.5s ease-in-out infinite;
+.dark .itinerary-content pre {
+  background: #0f172a;
 }

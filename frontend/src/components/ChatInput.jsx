@@ -30,7 +30,7 @@ export default function ChatInput({ onSend, disabled, showExamples = true }) {
   };
 
   return (
-    <div className="bg-white border-t border-slate-200 px-4 pt-3 pb-4">
+    <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-t border-white/20 dark:border-gray-700/30 px-4 pt-3 pb-4">
       {/* Example prompts - only when idle */}
       {showExamples && !disabled && !message && (
         <div className="mb-3 flex flex-wrap gap-2">
@@ -40,7 +40,7 @@ export default function ChatInput({ onSend, disabled, showExamples = true }) {
               onClick={() => {
                 onSend(prompt);
               }}
-              className="group flex items-center gap-1 text-xs bg-slate-50 hover:bg-orange-50 text-slate-500 hover:text-orange-600 px-3 py-1.5 rounded-full border border-slate-200 hover:border-orange-200 transition-all"
+              className="group flex items-center gap-1 text-xs bg-slate-50/80 dark:bg-gray-800/50 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-slate-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 px-3 py-1.5 rounded-full border border-slate-200/50 dark:border-gray-700/30 hover:border-orange-200 dark:hover:border-orange-700/50 transition-all hover:-translate-y-0.5"
             >
               <Sparkles size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               {prompt}
@@ -64,13 +64,13 @@ export default function ChatInput({ onSend, disabled, showExamples = true }) {
             placeholder="描述你的旅行需求，比如：推荐北京三里屯附近的五星级酒店..."
             disabled={disabled}
             rows={1}
-            className="w-full resize-none rounded-xl border border-slate-300 px-4 py-3 pr-12 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full resize-none rounded-2xl border border-slate-200/50 dark:border-gray-700/30 px-4 py-3 pr-12 text-sm text-slate-900 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm transition-all"
           />
         </div>
         <button
           type="submit"
           disabled={disabled || !message.trim()}
-          className="shrink-0 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:from-slate-300 disabled:to-slate-300 text-white p-3 rounded-xl transition-all disabled:cursor-not-allowed shadow-sm hover:shadow-md active:scale-95"
+          className="shrink-0 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-gray-600 dark:disabled:to-gray-600 text-white p-3 rounded-2xl transition-all disabled:cursor-not-allowed shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95"
         >
           {disabled ? (
             <Loader2 size={20} className="animate-spin" />

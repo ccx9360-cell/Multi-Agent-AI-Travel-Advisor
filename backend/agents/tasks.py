@@ -1,70 +1,49 @@
 """
-Task definitions for the 3 remaining AI agents.
+Task definitions for the 3 AI agents.
+Prompts are optimized for speed — concise, focused, no fluff.
 """
 
 from crewai import Task, Agent
 
 
 def create_planning_task(agent: Agent, user_request: str) -> Task:
-    """
-    Travel Manager's task: parse natural language into structured parameters.
-    """
+    """Travel Manager: parse NL into structured parameters."""
     return Task(
         description=(
-            f"Analyze this travel request and extract structured parameters:\n\n"
-            f"{user_request}\n\n"
-            f"Extract and output as a clear structured format:\n"
-            f"1. Destination(s) — city names and countries\n"
-            f"2. Origin city (if mentioned, otherwise assume a major hub)\n"
-            f"3. Duration — number of days\n"
-            f"4. Travel dates or approximate timeframe\n"
-            f"5. Number of travelers and any special needs\n"
-            f"6. Budget level (luxury, mid-range, budget)\n"
-            f"7. Key interests (food, history, art, adventure, culture, nightlife, etc.)\n"
-            f"8. Preferred cabin class for flights\n"
-            f"9. Any specific requirements (dietary, accessibility, etc.)\n\n"
-            f"If information is missing, fill in sensible defaults.\n"
-            f"Output ONLY the structured breakdown, no additional commentary."
+            f"Extract structured travel params from: {user_request}\n\n"
+            f"Output EXACTLY this format (fill defaults if missing):\n"
+            f"- Destinations: [city list]\n"
+            f"- Origin: [city]\n"
+            f"- Duration: [N days]\n"
+            f"- Dates: [departure-date] to [return-date or empty]\n"
+            f"- Travelers: [number]\n"
+            f"- Budget: [luxury/mid-range/budget]\n"
+            f"- Interests: [comma-separated list]\n"
+            f"- Cabin Class: [economy/business/first]\n"
+            f"- Special Requirements: [none or specific]\n\n"
+            f"Use the knowledge tool if helpful. Output structured format only."
         ),
         expected_output=(
-            "A structured breakdown with these exact fields:\n"
-            "- Destinations: [list of cities]\n"
-            "- Origin: [city]\n"
-            "- Duration: [N days]\n"
-            "- Dates: [departure and return dates or 'flexible']\n"
-            "- Travelers: [number and type]\n"
-            "- Budget: [level]\n"
-            "- Interests: [list]\n"
-            "- Cabin Class: [economy/business/first]\n"
-            "- Special Requirements: [list or 'none']\n"
-            "- Suggested Split: [e.g., '3 days Rome, 2 days Florence']"
+            "Structured breakdown: Destinations, Origin, Duration, "
+            "Dates, Travelers, Budget, Interests, Cabin Class, Special Requirements"
         ),
         agent=agent,
     )
 
 
 def create_knowledge_task(agent: Agent, destination: str) -> Task:
-    """
-    Knowledge Expert's task: provide cultural and practical travel info.
-    """
+    """Knowledge Expert: provide travel knowledge for destination."""
     return Task(
         description=(
-            f"Provide comprehensive travel knowledge for: {destination}\n\n"
-            f"Research and provide information on:\n"
-            f"1. Visa requirements and entry procedures\n"
-            f"2. Cultural etiquette and customs\n"
-            f"3. Best time to visit and weather considerations\n"
-            f"4. Currency, payment methods, and tipping practices\n"
-            f"5. Safety tips and travel advisories\n"
-            f"6. Packing recommendations\n"
-            f"7. Local customs and dining etiquette\n"
-            f"8. Any destination-specific tips\n\n"
-            f"Use the travel knowledge base to provide accurate, detailed information."
+            f"Provide travel knowledge for: {destination}\n"
+            f"Cover: visa/entry, cultural etiquette, best time to visit, "
+            f"currency/payment, safety tips, packing tips, local customs, "
+            f"dining etiquette, insider tips.\n"
+            f"Use the knowledge tool. Be concise but complete."
         ),
         expected_output=(
-            "Comprehensive travel guide covering visa/entry requirements, cultural etiquette, "
-            "best times to visit, currency/payment info, safety tips, packing suggestions, "
-            "local customs, and insider tips. All information should be specific and actionable."
+            "Concise travel guide: visa, culture, weather, currency, "
+            "safety, packing, customs, dining, tips."
         ),
         agent=agent,
     )
@@ -80,49 +59,32 @@ def create_compilation_task(
     logistics_data: str,
     knowledge_output: str,
 ) -> Task:
-    """
-    Itinerary Compiler's task: synthesize all data into a day-by-day plan.
-    Real API data is passed directly as context — no extra LLM calls needed to fetch it.
-    """
+    """Itinerary Compiler: synthesize all data into day-by-day plan."""
     return Task(
         description=(
-            f"Create a comprehensive, day-by-day travel itinerary using the real-time data below.\n\n"
-            f"## Original Request\n{user_request}\n\n"
-            f"## Travel Plan Parameters\n{planning_output}\n\n"
-            f"## Available Flights (Real-time data)\n{flights_data}\n\n"
-            f"## Available Accommodation (Real-time data)\n{accommodation_data}\n\n"
-            f"## Activities, Attractions & Dining (Real-time data)\n{activities_data}\n\n"
-            f"## Logistics: Transport, Weather, Currency, Country Info\n{logistics_data}\n\n"
-            f"## Cultural & Practical Knowledge\n{knowledge_output}\n\n"
-            f"INSTRUCTIONS:\n"
-            f"1. Create a day-by-day itinerary using ONLY the real data provided above\n"
-            f"2. Select the best flight option and recommend it with reasoning\n"
-            f"3. Select the best accommodation and explain why\n"
-            f"4. Schedule activities logically — group by neighborhood, consider timing\n"
-            f"5. Include restaurant recommendations from the dining data for each day\n"
-            f"6. Add transport details between locations\n"
-            f"7. Include weather-appropriate suggestions\n"
-            f"8. Add cultural tips and practical advice throughout\n"
-            f"9. Build in realistic timing and flexibility\n"
-            f"10. Provide a total budget summary at the end\n"
-            f"11. Include booking URLs where available\n"
+            f"Create a day-by-day itinerary from the REAL DATA below.\n"
+            f"ONLY use data provided — do not hallucinate.\n\n"
+            f"## Request\n{user_request}\n\n"
+            f"## Plan\n{planning_output}\n\n"
+            f"## Flights\n{flights_data}\n\n"
+            f"## Hotels\n{accommodation_data}\n\n"
+            f"## Activities & Dining\n{activities_data}\n\n"
+            f"## Transport & Weather\n{logistics_data}\n\n"
+            f"## Knowledge\n{knowledge_output}\n\n"
+            f"RULES:\n"
+            f"1. Day-by-day format with practical timing\n"
+            f"2. Group by neighborhood — minimize transit\n"
+            f"3. Recommend best flight + hotel with reasoning\n"
+            f"4. Include restaurant/activity picks from real data\n"
+            f"5. Weather-appropriate suggestions\n"
+            f"6. Total budget estimate at end\n"
+            f"7. Include booking URLs where available\n"
+            f"8. Write in Chinese\n"
         ),
         expected_output=(
-            "A complete, beautifully formatted day-by-day itinerary including:\n"
-            "- Trip Overview (destinations, dates, duration)\n"
-            "- Recommended Flight with booking details\n"
-            "- Recommended Accommodation with booking details\n"
-            "- Daily Breakdown with:\n"
-            "  * Morning/Afternoon/Evening activities with times\n"
-            "  * Restaurant recommendations for each meal\n"
-            "  * Transportation between activities\n"
-            "  * Estimated costs per activity\n"
-            "- Weather forecast for the trip dates\n"
-            "- Practical Information (visa, currency, tips, packing)\n"
-            "- Budget Summary (flights, hotels, activities, food, transport)\n"
-            "- Pre-Trip Checklist (bookings to make, what to pack)\n"
-            "- Booking Links for all recommended services\n\n"
-            "Format should be clear, detailed, and ready to use."
+            "Complete itinerary with: Trip Overview, Flight Recommendation, "
+            "Hotel Recommendation, Day-by-Day Plan, Weather Note, "
+            "Practical Tips, Budget Summary, Booking Links."
         ),
         agent=agent,
     )

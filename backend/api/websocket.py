@@ -1,5 +1,6 @@
 """
 WebSocket connection manager and handler for real-time progress updates.
+Timeout aligned: frontend 120s -> backend 180s (frontend has a 150s timeout).
 """
 
 import asyncio
@@ -18,11 +19,15 @@ logger = logging.getLogger(__name__)
 # In-memory store (would be a DB in production)
 itinerary_store: dict = {}
 
+# Pipeline timeout in seconds (must be > frontend's 150s)
+PIPELINE_TIMEOUT = 300  # 5 min — generous since CrewAI calls LLM
+
+# Step definitions for progress display
 AGENT_STEPS = [
-    {"key": "planning", "label": "Travel Planning Manager", "description": "Analyzing your request..."},
-    {"key": "data_fetch", "label": "Fetching Real-Time Data", "description": "Searching flights, hotels, activities..."},
-    {"key": "knowledge", "label": "Travel Knowledge Expert", "description": "Gathering travel tips..."},
-    {"key": "compilation", "label": "Itinerary Compiler & Optimizer", "description": "Building your itinerary..."},
+    {"key": "planning", "label": "行程规划解析", "description": "AI正在分析你的旅行需求..."},
+    {"key": "data_fetch", "label": "实时数据查询", "description": "搜索酒店、景点、交通信息..."},
+    {"key": "knowledge", "label": "旅行知识查询", "description": "收集当地旅行贴士..."},
+    {"key": "compilation", "label": "行程编排与优化", "description": "AI正在生成你的专属行程..."},
 ]
 
 
@@ -37,7 +42,6 @@ class ConnectionManager:
 
     def disconnect(self, session_id: str):
         self.active_connections.pop(session_id, None)
-        # Cancel background task if running
         task = self.active_tasks.pop(session_id, None)
         if task and not task.done():
             task.cancel()
@@ -48,7 +52,7 @@ class ConnectionManager:
             try:
                 await ws.send_json(message)
             except Exception:
-                pass  # Connection likely closed
+                pass
 
     def track_task(self, session_id: str, task: asyncio.Task):
         self.active_tasks[session_id] = task
@@ -82,7 +86,6 @@ async def run_with_progress(session_id: str, user_request: str):
                 0,
             )
             step_info = AGENT_STEPS[step_index] if step_index < len(AGENT_STEPS) else {}
-
             await manager.send_message(session_id, {
                 "type": "agent_progress",
                 "agent_key": step_key,
@@ -94,11 +97,13 @@ async def run_with_progress(session_id: str, user_request: str):
             })
             logger.info(f"[{session_id}] {label}: {status}")
 
-        # Run the pipeline in a thread (CrewAI is sync internally)
-        loop = asyncio.get_event_loop()
-        result = await run_travel_pipeline(
-            user_request=user_request,
-            progress_callback=progress_callback,
+        # Run pipeline with timeout
+        result = await asyncio.wait_for(
+            run_travel_pipeline(
+                user_request=user_request,
+                progress_callback=progress_callback,
+            ),
+            timeout=PIPELINE_TIMEOUT,
         )
 
         itinerary_store[itinerary_id]["itinerary"] = result
@@ -109,7 +114,15 @@ async def run_with_progress(session_id: str, user_request: str):
             "itinerary_id": itinerary_id,
             "itinerary": result,
         })
-        logger.info(f"[{session_id}] Pipeline completed")
+        logger.info(f"[{session_id}] Pipeline completed ({len(result)} chars)")
+
+    except asyncio.TimeoutError:
+        logger.error(f"[{session_id}] Pipeline timed out after {PIPELINE_TIMEOUT}s")
+        itinerary_store[itinerary_id]["status"] = "failed"
+        await manager.send_message(session_id, {
+            "type": "error",
+            "message": f"处理超时（超过 {PIPELINE_TIMEOUT//60} 分钟），请简化查询后重试",
+        })
 
     except Exception as e:
         logger.error(f"[{session_id}] Pipeline failed: {e}", exc_info=True)
@@ -131,14 +144,14 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 if not user_message.strip():
                     await manager.send_message(session_id, {
                         "type": "error",
-                        "message": "Please provide a travel request.",
+                        "message": "请输入旅行需求（如：'北京三日游'）",
                     })
                     continue
 
                 if not _get_api_key():
                     await manager.send_message(session_id, {
                         "type": "error",
-                        "message": "LLM API Key 未配置。请检查 .env 或 ~/.codex/auth.json。",
+                        "message": "LLM API Key 未配置，请检查 .env 文件",
                     })
                     continue
 

@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import { Download, Copy, Check, Clock, MessageSquare } from "lucide-react";
+import { Download, Copy, Check, Clock, MessageSquare, ChevronDown, FileText } from "lucide-react";
 import { useState } from "react";
 
 export default function ItineraryDisplay({ itinerary, request }) {
@@ -29,7 +29,7 @@ export default function ItineraryDisplay({ itinerary, request }) {
   // Render images from markdown — avoid <p><div> nesting
   const components = {
     img: ({ src, alt }) => (
-      <span className="block my-3 rounded-xl overflow-hidden bg-slate-100">
+      <span className="block my-3 rounded-xl overflow-hidden bg-slate-100 dark:bg-gray-800">
         <img
           src={src}
           alt={alt || ""}
@@ -53,31 +53,32 @@ export default function ItineraryDisplay({ itinerary, request }) {
   };
 
   return (
-    <div className="mx-4 my-3">
-      {/* Action bar */}
-      <div className="flex items-center justify-between mb-3 bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
+    <div className="mx-4 my-3 space-y-3">
+      {/* Action bar - glassmorphism */}
+      <div className="flex items-center justify-between bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-white/20 dark:border-gray-700/30 shadow-lg shadow-black/5 rounded-2xl p-3">
         <div className="flex items-center gap-2">
-          <div className="bg-green-100 p-1.5 rounded-lg">
-            <Check size={16} className="text-green-600" />
+          <div className="bg-green-100 dark:bg-green-900/30 p-1.5 rounded-lg">
+            <Check size={16} className="text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-800">行程方案</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-gray-100">行程方案</h3>
+            <p className="text-xs text-slate-400 dark:text-gray-500">
               基于美团酒旅实时数据
             </p>
           </div>
         </div>
         <div className="flex gap-1">
+          {/* Copy button */}
           <button
             onClick={handleCopy}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-all text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 hover:scale-105 active:scale-95"
             title="复制内容"
           >
             {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
           </button>
           <button
             onClick={handleDownload}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-all text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 hover:scale-105 active:scale-95"
             title="下载为 Markdown"
           >
             <Download size={16} />
@@ -88,22 +89,26 @@ export default function ItineraryDisplay({ itinerary, request }) {
       {/* Original request (collapsible) */}
       <button
         onClick={() => setExpandedRequest(!expandedRequest)}
-        className="w-full bg-orange-50 border border-orange-200 rounded-xl p-3 mb-3 text-left hover:bg-orange-100/50 transition-colors"
+        className="w-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-white/20 dark:border-gray-700/30 shadow-lg shadow-black/5 rounded-2xl p-3 text-left hover:bg-white/90 dark:hover:bg-gray-800/90 transition-all duration-300 group"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare size={14} className="text-orange-600" />
-            <p className="text-xs font-semibold text-orange-800">你的查询</p>
+            <MessageSquare size={14} className="text-orange-500" />
+            <p className="text-xs font-semibold text-orange-700 dark:text-orange-400">你的查询</p>
           </div>
-          <Clock size={14} className={`text-orange-400 transition-transform ${expandedRequest ? "rotate-180" : ""}`} />
+          <ChevronDown size={14} className={`text-orange-400 dark:text-orange-500 transition-transform duration-300 ${expandedRequest ? "rotate-180" : ""}`} />
         </div>
-        {expandedRequest && (
-          <p className="text-sm text-orange-900 mt-2">{request}</p>
-        )}
+        <div
+          className={`overflow-hidden transition-all duration-300 ${
+            expandedRequest ? "max-h-40 opacity-100 mt-2" : "max-h-0 opacity-0"
+          }`}
+        >
+          <p className="text-sm text-slate-700 dark:text-gray-300">{request}</p>
+        </div>
       </button>
 
       {/* Itinerary content */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 itinerary-content shadow-sm">
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-white/20 dark:border-gray-700/30 shadow-lg shadow-black/5 rounded-2xl p-5 itinerary-content">
         <ReactMarkdown components={components}>{itinerary}</ReactMarkdown>
       </div>
     </div>

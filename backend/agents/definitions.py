@@ -1,6 +1,6 @@
 """
-AI Agent definitions — only the 3 agents that still require LLM reasoning.
-The 4 data-fetching agents (flights, accommodation, activities, logistics)
+AI Agent definitions — only 3 agents that still require LLM reasoning.
+Data-fetching agents (flights, accommodation, activities, logistics)
 are now pure API services and no longer need AI.
 """
 
@@ -10,84 +10,59 @@ from backend.agents.llm import create_gemini_llm
 
 
 def create_travel_manager(tools: List = None) -> Agent:
-    """
-    ORCHESTRATOR AGENT
-    Parses user requests into structured travel parameters.
-    """
+    """Parses user requests into structured travel parameters."""
     return Agent(
         role="Travel Planning Manager",
         goal=(
-            "Analyze user travel requests and extract structured parameters: "
-            "destinations, dates, duration, number of travelers, budget level, "
-            "interests, cabin class, and special requirements. "
-            "Output a clear, structured breakdown that downstream services can use."
+            "Parse user travel requests into structured parameters: "
+            "destinations, dates, travelers, interests, budget. "
+            "Output a precise structured breakdown."
         ),
         backstory=(
-            "You are a seasoned travel planning expert with 15 years of experience. "
-            "You have a talent for understanding what travelers really want, even when "
-            "they don't articulate it fully. You extract precise details from vague requests "
-            "and fill in reasonable defaults for missing information. You think about the "
-            "traveler's experience holistically and anticipate needs they haven't mentioned."
+            "You are a travel planning expert. You extract precise details "
+            "from vague requests and fill reasonable defaults for missing info."
         ),
         tools=tools or [],
         llm=create_gemini_llm(),
-        verbose=True,
+        verbose=False,  # ← REDUCED: was True
         allow_delegation=False,
-        max_iter=10,
+        max_iter=5,     # ← REDUCED: was 10
     )
 
 
 def create_travel_knowledge_agent(tools: List = None) -> Agent:
-    """
-    TRAVEL KNOWLEDGE EXPERT AGENT
-    Provides cultural insights, visa info, and practical advice via RAG.
-    """
+    """Provides cultural insights, visa info, and practical advice via RAG."""
     return Agent(
         role="Travel Knowledge Expert",
         goal=(
             "Provide expert travel advice, cultural insights, visa requirements, "
-            "packing tips, and destination-specific knowledge by searching the "
-            "comprehensive travel knowledge base."
+            "and destination-specific knowledge from the travel knowledge base."
         ),
         backstory=(
-            "You are a travel encyclopedia with deep knowledge of destinations worldwide. "
-            "You've studied cultural norms, visa policies, travel advisories, and practical "
-            "tips for hundreds of countries. You provide accurate, well-researched information "
-            "that helps travelers prepare properly and avoid cultural faux pas."
+            "You are a travel encyclopedia with knowledge of destinations worldwide."
         ),
         tools=tools or [],
         llm=create_gemini_llm(),
-        verbose=True,
+        verbose=False,  # ← REDUCED: was True
         allow_delegation=False,
     )
 
 
 def create_itinerary_compiler(tools: List = None) -> Agent:
-    """
-    ITINERARY COMPILER AGENT
-    Takes all real API data + knowledge and creates the final itinerary.
-    This is where the AI adds the most value — synthesis and personalization.
-    """
+    """Synthesizes all data into the final itinerary."""
     return Agent(
         role="Itinerary Compiler & Optimizer",
         goal=(
-            "Synthesize real-time travel data (flights, hotels, activities, logistics) "
-            "and expert knowledge into a comprehensive, personalized day-by-day itinerary. "
-            "Ensure logical flow, optimal timing, geographic efficiency, and balanced pacing. "
-            "Create a beautiful, easy-to-follow travel plan."
+            "Synthesize real API data (flights, hotels, activities, logistics) "
+            "into a practical day-by-day itinerary with logical flow and optimal pacing."
         ),
         backstory=(
-            "You are a master travel planner known for creating perfectly orchestrated "
-            "itineraries. You have an eye for detail and spatial awareness — you group "
-            "activities by neighborhood to minimize transit time. You understand the rhythm "
-            "of travel: when to have early starts vs. leisurely mornings, when to have a "
-            "big day vs. downtime. You create itineraries that are ambitious yet realistic, "
-            "with built-in flexibility. Your itineraries read like a story, building excitement "
-            "throughout the trip. You include all practical details: addresses, prices, "
-            "booking links, and insider tips."
+            "You are a master travel planner. You group activities by neighborhood "
+            "to minimize transit, balance busy days with downtime, and include all "
+            "practical details: addresses, prices, and booking links."
         ),
         tools=tools or [],
         llm=create_gemini_llm(),
-        verbose=True,
+        verbose=False,  # ← REDUCED: was True
         allow_delegation=False,
     )
