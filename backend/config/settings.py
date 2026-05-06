@@ -29,6 +29,7 @@ class Settings:
     yelp_api_key: str = field(default_factory=lambda: os.getenv("YELP_API_KEY", ""))
 
     # --- Logistics ---
+    amap_api_key: str = field(default_factory=lambda: os.getenv("AMAP_API_KEY", ""))
     google_maps_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_MAPS_API_KEY", ""))
     openweather_api_key: str = field(default_factory=lambda: os.getenv("OPENWEATHER_API_KEY", ""))
     exchange_rate_api_key: str = field(default_factory=lambda: os.getenv("EXCHANGE_RATE_API_KEY", ""))

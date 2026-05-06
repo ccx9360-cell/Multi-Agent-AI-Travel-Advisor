@@ -25,6 +25,11 @@ from backend.agents.tasks import (
     create_compilation_task,
 )
 from backend.agents.tools import TravelKnowledgeTool
+from backend.services.meituan.mttravel_client import (
+    MeituanTravelClient,
+    is_chinese_destination,
+    to_chinese_name,
+)
 from backend.services.flights import FlightService
 from backend.services.accommodation import AccommodationService
 from backend.services.activities import ActivityService
@@ -254,6 +259,25 @@ async def run_travel_pipeline(
     # ── Parse structured params from AI output ─────────────────────────────
     # Extract key parameters for API calls
     params = _extract_params(planning_result, user_request)
+
+    # ── 中国目的地 → 走美团快速通道 ───────────────────────────────────
+    destination = params.get("destination", "")
+    if is_chinese_destination(destination):
+        logger.info(f"检测到中国目的地 {destination}，使用美团查询")
+        await notify("data_fetch", "美团酒旅数据", "running")
+        try:
+            client = MeituanTravelClient()
+            meituan_result = await client.search(
+                to_chinese_name(destination),
+                user_request,
+            )
+            await notify("data_fetch", "美团酒旅数据", "completed")
+            return meituan_result
+        except RuntimeError as e:
+            logger.error(f"美团查询失败: {e}")
+            await notify("data_fetch", "美团酒旅数据", "error")
+            # 降级：继续走原有国际线路
+            logger.info("美团查询失败，降级到原有国际API流程")
 
     # ── Step 2: Fetch real data from APIs in parallel (NO AI) ─────────────
     await notify("data_fetch", "Fetching Real-Time Data", "running")

@@ -5,7 +5,7 @@ Logistics service — combines Google Maps, Weather, Currency, and Country info.
 import asyncio
 import logging
 from typing import Optional
-from backend.services.logistics.google_maps import GoogleMapsClient
+from backend.services.logistics.amap_maps import AmapMapsClient
 from backend.services.logistics.weather import WeatherClient
 from backend.services.logistics.currency import CurrencyClient
 from backend.services.logistics.country_info import CountryInfoClient
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class LogisticsService:
 
     def __init__(self):
-        self.maps = GoogleMapsClient()
+        self.maps = AmapMapsClient()
         self.weather = WeatherClient()
         self.currency = CurrencyClient()
         self.country = CountryInfoClient()
