@@ -421,6 +421,13 @@ def _extract_params(planning_output: str, original_request: str) -> dict:
         "lisbon": ("Lisbon", "Portugal"),
         "bangkok": ("Bangkok", "Thailand"),
         "sydney": ("Sydney", "Australia"),
+        # 中国城市
+        "北京": ("北京", "中国"),
+        "上海": ("上海", "中国"),
+        "广州": ("广州", "中国"),
+        "深圳": ("深圳", "中国"),
+        "杭州": ("杭州", "中国"),
+        "成都": ("成都", "中国"),
     }
 
     destinations = []
