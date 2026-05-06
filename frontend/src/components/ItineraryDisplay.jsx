@@ -26,10 +26,10 @@ export default function ItineraryDisplay({ itinerary, request }) {
     URL.revokeObjectURL(url);
   };
 
-  // Render images from markdown
-  const renderers = {
+  // Render images from markdown — avoid <p><div> nesting
+  const components = {
     img: ({ src, alt }) => (
-      <div className="my-3 rounded-xl overflow-hidden bg-slate-100">
+      <span className="block my-3 rounded-xl overflow-hidden bg-slate-100">
         <img
           src={src}
           alt={alt || ""}
@@ -39,8 +39,17 @@ export default function ItineraryDisplay({ itinerary, request }) {
             e.target.style.display = "none";
           }}
         />
-      </div>
+      </span>
     ),
+    // Suppress <p> wrapping around images
+    p: ({ children, ...props }) => {
+      const hasOnlyImage =
+        Array.isArray(children) && children.every(
+          (c) => typeof c === "object" && c?.type === "img"
+        );
+      if (hasOnlyImage) return <>{children}</>;
+      return <p {...props}>{children}</p>;
+    },
   };
 
   return (
@@ -95,7 +104,7 @@ export default function ItineraryDisplay({ itinerary, request }) {
 
       {/* Itinerary content */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 itinerary-content shadow-sm">
-        <ReactMarkdown components={renderers}>{itinerary}</ReactMarkdown>
+        <ReactMarkdown components={components}>{itinerary}</ReactMarkdown>
       </div>
     </div>
   );

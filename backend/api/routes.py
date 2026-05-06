@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException
 from backend.models.schemas import TravelRequest
 from backend.crew.orchestrator import run_travel_pipeline
 from backend.api.websocket import itinerary_store
-from backend.config.settings import settings
+from backend.agents.llm import _get_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "ok",
-        "gemini_key_configured": bool(settings.gemini_api_key),
-        "amadeus_key_configured": bool(settings.amadeus_api_key),
-        "serpapi_key_configured": bool(settings.serpapi_key),
+        "llm_configured": bool(_get_api_key()),
     }
 
 
@@ -59,8 +57,8 @@ async def delete_itinerary(itinerary_id: str):
 @router.post("/plan")
 async def create_plan(request: TravelRequest):
     """REST endpoint for creating a travel plan (non-streaming)."""
-    if not settings.gemini_api_key:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+    if not _get_api_key():
+        raise HTTPException(status_code=500, detail="LLM API Key not configured")
 
     try:
         result = await run_travel_pipeline(request.message)

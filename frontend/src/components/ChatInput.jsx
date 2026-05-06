@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Loader2, Sparkles } from "lucide-react";
 
 const EXAMPLE_PROMPTS = [
@@ -8,8 +8,18 @@ const EXAMPLE_PROMPTS = [
   "昆明大理丽江七日游，带爸妈去",
 ];
 
-export default function ChatInput({ onSend, disabled }) {
+export default function ChatInput({ onSend, disabled, showExamples = true }) {
   const [message, setMessage] = useState("");
+  const textareaRef = useRef(null);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 160) + "px";
+    }
+  }, [message]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -22,7 +32,7 @@ export default function ChatInput({ onSend, disabled }) {
   return (
     <div className="bg-white border-t border-slate-200 px-4 pt-3 pb-4">
       {/* Example prompts - only when idle */}
-      {!disabled && !message && (
+      {showExamples && !disabled && !message && (
         <div className="mb-3 flex flex-wrap gap-2">
           {EXAMPLE_PROMPTS.map((prompt, i) => (
             <button
@@ -42,6 +52,7 @@ export default function ChatInput({ onSend, disabled }) {
       <form onSubmit={handleSubmit} className="flex gap-2 items-end">
         <div className="flex-1 relative">
           <textarea
+            ref={textareaRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => {

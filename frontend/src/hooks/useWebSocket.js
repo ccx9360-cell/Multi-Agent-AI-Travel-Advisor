@@ -42,6 +42,15 @@ export function useWebSocket() {
     const ws = new WebSocket(`${WS_URL}/${sessionId}`);
     wsRef.current = ws;
 
+    // Timeout: auto-fail after 150 seconds
+    const timeoutId = setTimeout(() => {
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+        setStatus("error");
+        setError("查询超时（超过 2 分钟），请稍后重试或简化查询");
+      }
+    }, 150000);
+
     ws.onopen = () => {
       setStatus("processing");
       ws.send(JSON.stringify({ type: "plan_request", message }));
@@ -70,6 +79,7 @@ export function useWebSocket() {
           break;
 
         case "completed":
+          clearTimeout(timeoutId);
           setStatus("completed");
           setItinerary(data.itinerary);
           setItineraryId(data.itinerary_id);
@@ -83,6 +93,7 @@ export function useWebSocket() {
           break;
 
         case "error":
+          clearTimeout(timeoutId);
           setStatus("error");
           setError(data.message);
           ws.close();
@@ -94,11 +105,13 @@ export function useWebSocket() {
     };
 
     ws.onerror = () => {
+      clearTimeout(timeoutId);
       setStatus("error");
-      setError("Connection failed. Make sure the backend server is running on port 8000.");
+      setError("连接失败，请确保后端服务已启动（端口 8000）");
     };
 
     ws.onclose = () => {
+      clearTimeout(timeoutId);
       wsRef.current = null;
     };
   }, [reset]);

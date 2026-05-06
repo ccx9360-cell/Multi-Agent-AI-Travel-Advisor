@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ChatInput from "./components/ChatInput";
@@ -7,7 +7,7 @@ import ItineraryDisplay from "./components/ItineraryDisplay";
 import WelcomeScreen from "./components/WelcomeScreen";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useItineraryHistory } from "./hooks/useItineraryHistory";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,13 +24,23 @@ export default function App() {
     reset,
   } = useWebSocket();
 
-  const { history, fetchHistory, deleteItinerary } = useItineraryHistory();
+  const { history, loading: historyLoading, fetchHistory, deleteItinerary } = useItineraryHistory();
 
+  const resultRef = useRef(null);
+
+  // Fetch history on mount and after completion
   useEffect(() => {
     if (status === "completed") {
       fetchHistory();
     }
   }, [status, fetchHistory]);
+
+  // Auto-scroll to results when they arrive
+  useEffect(() => {
+    if (status === "completed" && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [status]);
 
   // Direct send - no intermediate form
   const handleSend = (message) => {
@@ -100,10 +110,12 @@ export default function App() {
 
             {/* Result */}
             {showResult && (
-              <ItineraryDisplay
-                itinerary={displayedItinerary}
-                request={displayedRequest}
-              />
+              <div ref={resultRef}>
+                <ItineraryDisplay
+                  itinerary={displayedItinerary}
+                  request={displayedRequest}
+                />
+              </div>
             )}
 
             {/* New trip button */}
@@ -144,7 +156,7 @@ export default function App() {
           </div>
 
           {/* Chat input — always visible when idle */}
-          <ChatInput onSend={handleSend} disabled={isProcessing} />
+          <ChatInput onSend={handleSend} disabled={isProcessing} showExamples={showWelcome} />
         </main>
       </div>
     </div>

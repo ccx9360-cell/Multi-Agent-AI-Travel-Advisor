@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.config.settings import settings
 from backend.api.routes import router
 from backend.api.websocket import websocket_endpoint
+from backend.agents.llm import _get_api_key
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,8 +23,8 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    if not settings.gemini_api_key:
-        logger.warning("GEMINI_API_KEY not set. AI agents will fail.")
+    if not _get_api_key():
+        logger.warning("LLM API Key 未配置。请检查 .env 或 ~/.codex/auth.json。AI agents 将无法工作。")
     if not settings.amadeus_api_key:
         logger.warning("AMADEUS_API_KEY not set. Flight search will use SerpApi fallback.")
     if not settings.serpapi_key:
