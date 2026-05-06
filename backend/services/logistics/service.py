@@ -60,9 +60,9 @@ class LogisticsService:
             logger.info(f"Weather: {len(result.weather)} days of forecast")
 
         # Country
-        if isinstance(data.get("country"), object) and not isinstance(data.get("country"), Exception):
-            country_info = data["country"]
-            if country_info:
+        country_info = data.get("country")
+        if country_info is not None and not isinstance(country_info, Exception):
+            if hasattr(country_info, 'currency_code'):
                 result.country = country_info
                 # Get currency exchange rate based on country's currency
                 if country_info.currency_code and country_info.currency_code != base_currency:

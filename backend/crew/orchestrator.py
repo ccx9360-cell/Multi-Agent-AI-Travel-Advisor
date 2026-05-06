@@ -301,7 +301,7 @@ async def run_travel_pipeline(
     accommodation_task = accommodation_service.search(
         destination=params["destination"],
         check_in=params["departure_date"],
-        check_out=params.get("return_date", params["departure_date"]),
+        check_out=params.get("return_date") or params["departure_date"],
         guests=params["travelers"],
     )
 

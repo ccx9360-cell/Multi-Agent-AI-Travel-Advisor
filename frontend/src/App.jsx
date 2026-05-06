@@ -7,7 +7,7 @@ import ItineraryDisplay from "./components/ItineraryDisplay";
 import WelcomeScreen from "./components/WelcomeScreen";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useItineraryHistory } from "./hooks/useItineraryHistory";
-import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
