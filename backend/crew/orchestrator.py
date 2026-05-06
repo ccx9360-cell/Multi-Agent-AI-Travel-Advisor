@@ -392,16 +392,19 @@ def _extract_params(planning_output: str, original_request: str) -> dict:
     request_lower = original_request.lower()
 
     # Simple extraction — in production, you'd use a more robust parser
+    from datetime import date
+    today = date.today()
+    default_departure = today.isoformat()
     params = {
-        "origin": "JFK",
+        "origin": "北京",
         "destination": "",
         "destinations": [],
         "country": "",
-        "departure_date": "2025-06-15",
-        "return_date": "2025-06-22",
-        "travelers": 1,
+        "departure_date": default_departure,
+        "return_date": "",
+        "travelers": 2,
         "cabin_class": "economy",
-        "interests": ["food", "culture", "history"],
+        "interests": ["美食", "文化", "自然风光"],
     }
 
     # Extract destination from planning output
@@ -428,6 +431,29 @@ def _extract_params(planning_output: str, original_request: str) -> dict:
         "深圳": ("深圳", "中国"),
         "杭州": ("杭州", "中国"),
         "成都": ("成都", "中国"),
+        # 英文别名
+        "beijing": ("北京", "中国"),
+        "shanghai": ("上海", "中国"),
+        "guangzhou": ("广州", "中国"),
+        "shenzhen": ("深圳", "中国"),
+        "hangzhou": ("杭州", "中国"),
+        "chengdu": ("成都", "中国"),
+        "wuhan": ("武汉", "中国"),
+        "xian": ("西安", "中国"),
+        "nanjing": ("南京", "中国"),
+        "chongqing": ("重庆", "中国"),
+        "suzhou": ("苏州", "中国"),
+        "kunming": ("昆明", "中国"),
+        "xiamen": ("厦门", "中国"),
+        "qingdao": ("青岛", "中国"),
+        "dalian": ("大连", "中国"),
+        "sanya": ("三亚", "中国"),
+        "guilin": ("桂林", "中国"),
+        "lijiang": ("丽江", "中国"),
+        "dali": ("大理", "中国"),
+        "changsha": ("长沙", "中国"),
+        "zhengzhou": ("郑州", "中国"),
+        "harbin": ("哈尔滨", "中国"),
     }
 
     destinations = []

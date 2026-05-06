@@ -28,7 +28,7 @@ export default function ChatInput({ onSend, disabled }) {
             <button
               key={i}
               onClick={() => {
-                setMessage(prompt);
+                onSend(prompt);
               }}
               className="group flex items-center gap-1 text-xs bg-slate-50 hover:bg-orange-50 text-slate-500 hover:text-orange-600 px-3 py-1.5 rounded-full border border-slate-200 hover:border-orange-200 transition-all"
             >

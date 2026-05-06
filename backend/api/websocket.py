@@ -6,11 +6,12 @@ import asyncio
 import uuid
 import logging
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 from fastapi import WebSocket, WebSocketDisconnect
 
 from backend.crew.orchestrator import run_travel_pipeline
 from backend.config.settings import settings
+from backend.agents.llm import _get_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ AGENT_STEPS = [
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
+        self.active_tasks: Dict[str, asyncio.Task] = {}
 
     async def connect(self, websocket: WebSocket, session_id: str):
         await websocket.accept()
@@ -35,11 +37,21 @@ class ConnectionManager:
 
     def disconnect(self, session_id: str):
         self.active_connections.pop(session_id, None)
+        # Cancel background task if running
+        task = self.active_tasks.pop(session_id, None)
+        if task and not task.done():
+            task.cancel()
 
     async def send_message(self, session_id: str, message: dict):
         ws = self.active_connections.get(session_id)
         if ws:
-            await ws.send_json(message)
+            try:
+                await ws.send_json(message)
+            except Exception:
+                pass  # Connection likely closed
+
+    def track_task(self, session_id: str, task: asyncio.Task):
+        self.active_tasks[session_id] = task
 
 
 manager = ConnectionManager()
@@ -123,14 +135,15 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     })
                     continue
 
-                if not settings.gemini_api_key:
+                if not _get_api_key():
                     await manager.send_message(session_id, {
                         "type": "error",
-                        "message": "GEMINI_API_KEY not configured on the server.",
+                        "message": "LLM API Key 未配置。请检查 .env 或 ~/.codex/auth.json。",
                     })
                     continue
 
-                asyncio.create_task(run_with_progress(session_id, user_message))
+                task = asyncio.create_task(run_with_progress(session_id, user_message))
+                manager.track_task(session_id, task)
 
     except WebSocketDisconnect:
         manager.disconnect(session_id)
