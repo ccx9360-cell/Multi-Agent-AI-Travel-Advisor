@@ -61,13 +61,14 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-async def run_with_progress(session_id: str, user_request: str):
+async def run_with_progress(session_id: str, user_request: str, scenario: str = "free"):
     """Run the travel pipeline while sending progress updates via WebSocket."""
     itinerary_id = str(uuid.uuid4())
 
     itinerary_store[itinerary_id] = {
         "id": itinerary_id,
         "request": user_request,
+        "scenario": scenario,
         "itinerary": "",
         "created_at": datetime.now().isoformat(),
         "status": "processing",
@@ -113,6 +114,7 @@ async def run_with_progress(session_id: str, user_request: str):
             "type": "completed",
             "itinerary_id": itinerary_id,
             "itinerary": result,
+            "scenario": scenario,
         })
         logger.info(f"[{session_id}] Pipeline completed ({len(result)} chars)")
 
@@ -141,6 +143,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             data = await websocket.receive_json()
             if data.get("type") == "plan_request":
                 user_message = data.get("message", "")
+                scenario = data.get("scenario", "free")
                 if not user_message.strip():
                     await manager.send_message(session_id, {
                         "type": "error",
@@ -155,7 +158,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     })
                     continue
 
-                task = asyncio.create_task(run_with_progress(session_id, user_message))
+                task = asyncio.create_task(run_with_progress(session_id, user_message, scenario))
                 manager.track_task(session_id, task)
 
     except WebSocketDisconnect:

@@ -22,6 +22,7 @@ export function useWebSocket() {
   const [itinerary, setItinerary] = useState(null);
   const [itineraryId, setItineraryId] = useState(null);
   const [error, setError] = useState(null);
+  const [scenario, setScenario] = useState("free");
   const wsRef = useRef(null);
 
   const reset = useCallback(() => {
@@ -31,9 +32,10 @@ export function useWebSocket() {
     setItinerary(null);
     setItineraryId(null);
     setError(null);
+    setScenario("free");
   }, []);
 
-  const sendRequest = useCallback((message) => {
+  const sendRequest = useCallback((message, scenario = "free") => {
     reset();
     setStatus("connecting");
     setError(null);
@@ -53,7 +55,7 @@ export function useWebSocket() {
 
     ws.onopen = () => {
       setStatus("processing");
-      ws.send(JSON.stringify({ type: "plan_request", message }));
+      ws.send(JSON.stringify({ type: "plan_request", message, scenario }));
     };
 
     ws.onmessage = (event) => {
@@ -83,6 +85,9 @@ export function useWebSocket() {
           setStatus("completed");
           setItinerary(data.itinerary);
           setItineraryId(data.itinerary_id);
+          if (data.scenario) {
+            setScenario(data.scenario);
+          }
           // Mark all agents as completed
           setAgentProgress((prev) => {
             const updated = { ...prev };
@@ -123,6 +128,7 @@ export function useWebSocket() {
     itinerary,
     itineraryId,
     error,
+    scenario,
     sendRequest,
     reset,
   };

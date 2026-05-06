@@ -49,6 +49,30 @@
 .stagger-4 { animation: fadeIn 0.5s ease-out 0.2s both; }
 .stagger-5 { animation: fadeIn 0.5s ease-out 0.25s both; }
 .stagger-6 { animation: fadeIn 0.5s ease-out 0.3s both; }
+.stagger-7 { animation: fadeIn 0.5s ease-out 0.35s both; }
+.stagger-8 { animation: fadeIn 0.5s ease-out 0.4s both; }
+
+/* Slide-up for form entrance */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slideUp 0.4s ease-out; }
+
+/* Scale on chip click */
+@keyframes chip-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+.animate-chip-pop { animation: chip-pop 0.2s ease-out; }
+
+/* Pulse for loading submit buttons */
+@keyframes submit-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-submit-pulse { animation: submit-pulse 1.2s ease-in-out infinite; }
 
 /* Pulse dot for active agent */
 @keyframes pulse-dot {

@@ -3,8 +3,12 @@ import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ChatInput from "./components/ChatInput";
 import AgentProgress from "./components/AgentProgress";
-import ItineraryDisplay from "./components/ItineraryDisplay";
 import WelcomeScreen from "./components/WelcomeScreen";
+import FoodForm from "./components/FoodForm";
+import HotelForm from "./components/HotelForm";
+import AttractionForm from "./components/AttractionForm";
+import TripPlannerForm from "./components/TripPlannerForm";
+import ResultCards from "./components/ResultCards";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useItineraryHistory } from "./hooks/useItineraryHistory";
 import { AlertCircle, RefreshCw, X } from "lucide-react";
@@ -77,6 +81,8 @@ export default function App() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   const [toast, setToast] = useState(null);
+  const [mode, setMode] = useState("menu"); // menu|food|hotel|attractions|itinerary|free|processing|result
+  const [scenario, setScenario] = useState("free");
 
   // Apply dark class
   useEffect(() => {
@@ -107,6 +113,7 @@ export default function App() {
     agentProgress,
     itinerary,
     error,
+    scenario: wsScenario,
     sendRequest,
     reset,
   } = useWebSocket();
@@ -129,21 +136,51 @@ export default function App() {
     }
   }, [status]);
 
-  // Direct send - no intermediate form
-  const handleSend = (message) => {
-    setSelectedItinerary(null);
-    setCurrentRequest(message);
-    sendRequest(message);
+  // Sync scenario from WebSocket when completed
+  useEffect(() => {
+    if (status === "completed" && wsScenario) {
+      setScenario(wsScenario);
+    }
+  }, [status, wsScenario]);
+
+  // When status changes to completed, show result mode
+  useEffect(() => {
+    if (status === "completed") {
+      setMode("result");
+    } else if (status === "error") {
+      setMode("menu");
+    } else if (status === "processing" || status === "connecting") {
+      setMode("processing");
+    }
+  }, [status]);
+
+  // Mode selection
+  const handleSelectMode = (modeId) => {
+    if (modeId === "free") {
+      setMode("free");
+    } else {
+      setMode(modeId);
+    }
   };
 
-  // Quick select from welcome screen
-  const handleQuickSelect = (query) => {
-    handleSend(query);
+  // Form submit → send request
+  const handleFormSubmit = (message, scenarioType) => {
+    setSelectedItinerary(null);
+    setCurrentRequest(message);
+    setScenario(scenarioType);
+    sendRequest(message, scenarioType);
+    // Mode will be set to "processing" by the status effect
+  };
+
+  // Direct send from ChatInput (free mode)
+  const handleSend = (message) => {
+    handleFormSubmit(message, "free");
   };
 
   // Select from history
   const handleSelectHistory = (item) => {
     reset();
+    setMode("menu");
     setSelectedItinerary(item);
     setCurrentRequest(item.request);
   };
@@ -151,23 +188,13 @@ export default function App() {
   // New trip
   const handleNewTrip = () => {
     reset();
+    setMode("menu");
     setSelectedItinerary(null);
     setCurrentRequest("");
     fetchHistory();
   };
 
   const isProcessing = status === "processing" || status === "connecting";
-  const showWelcome = status === "idle" && !selectedItinerary;
-  const showResult =
-    (status === "completed" && itinerary) ||
-    (selectedItinerary && selectedItinerary.status === "completed");
-
-  const displayedItinerary = selectedItinerary
-    ? selectedItinerary.itinerary
-    : itinerary;
-  const displayedRequest = selectedItinerary
-    ? selectedItinerary.request
-    : currentRequest;
 
   return (
     <ErrorBoundary>
@@ -183,13 +210,34 @@ export default function App() {
             onClose={() => setSidebarOpen(false)}
           />
 
-          <main className="flex-1 flex flex-col overflow-hidden">
+          <main className="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-72">
             {/* Content area */}
             <div className="flex-1 overflow-y-auto">
-              {/* Welcome */}
-              {showWelcome && (
+              {/* Mode selection */}
+              {mode === "menu" && (
                 <div className="transition-opacity duration-300">
-                  <WelcomeScreen onQuickSelect={handleQuickSelect} />
+                  <WelcomeScreen onSelectMode={handleSelectMode} />
+                </div>
+              )}
+
+              {/* Forms */}
+              {mode === "food" && (
+                <FoodForm onSubmit={handleFormSubmit} onBack={() => setMode("menu")} />
+              )}
+              {mode === "hotel" && (
+                <HotelForm onSubmit={handleFormSubmit} onBack={() => setMode("menu")} />
+              )}
+              {mode === "attractions" && (
+                <AttractionForm onSubmit={handleFormSubmit} onBack={() => setMode("menu")} />
+              )}
+              {mode === "itinerary" && (
+                <TripPlannerForm onSubmit={handleFormSubmit} onBack={() => setMode("menu")} />
+              )}
+
+              {/* Free input mode */}
+              {mode === "free" && (
+                <div className="flex-1 flex flex-col">
+                  <WelcomeScreen onSelectMode={() => {}} />
                 </div>
               )}
 
@@ -201,17 +249,31 @@ export default function App() {
               )}
 
               {/* Result */}
-              {showResult && (
+              {mode === "result" && itinerary && (
                 <div ref={resultRef} className="transition-opacity duration-300 animate-fade-in">
-                  <ItineraryDisplay
-                    itinerary={displayedItinerary}
-                    request={displayedRequest}
+                  <ResultCards
+                    scenario={scenario}
+                    itinerary={itinerary}
+                    request={currentRequest}
+                    onNewSearch={handleNewTrip}
+                  />
+                </div>
+              )}
+
+              {/* History result */}
+              {selectedItinerary && selectedItinerary.status === "completed" && mode === "menu" && (
+                <div className="transition-opacity duration-300 animate-fade-in">
+                  <ResultCards
+                    scenario={selectedItinerary.scenario || "free"}
+                    itinerary={selectedItinerary.itinerary}
+                    request={selectedItinerary.request}
+                    onNewSearch={handleNewTrip}
                   />
                 </div>
               )}
 
               {/* New trip button */}
-              {(showResult) && (
+              {mode === "result" && (
                 <div className="text-center py-4 animate-fade-in">
                   <button
                     onClick={handleNewTrip}
@@ -247,8 +309,10 @@ export default function App() {
               )}
             </div>
 
-            {/* Chat input — always visible when idle */}
-            <ChatInput onSend={handleSend} disabled={isProcessing} showExamples={showWelcome} />
+            {/* Chat input — only in menu and free mode */}
+            {(mode === "menu" || mode === "free") && (
+              <ChatInput onSend={handleSend} disabled={isProcessing} showExamples={mode === "menu"} />
+            )}
           </main>
         </div>
 

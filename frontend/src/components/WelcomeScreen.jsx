@@ -1,47 +1,52 @@
 import {
-  Building2, Train, Ticket, Hotel,
-  UtensilsCrossed, Mountain, Compass,
+  UtensilsCrossed, Hotel, Ticket, Route,
+  MessageSquareText, Compass,
 } from "lucide-react";
 
-const QUICK_TRIPS = [
+const MODES = [
   {
-    icon: Hotel, label: "酒店推荐",
-    query: "推荐北京三里屯附近的五星级酒店，预算800以内",
-    gradient: "from-orange-400 to-rose-500",
-  },
-  {
-    icon: Ticket, label: "景点门票",
-    query: "故宫门票多少钱？怎么预约？",
-    gradient: "from-blue-400 to-cyan-500",
-  },
-  {
-    icon: Mountain, label: "热门旅游",
-    query: "北京三日游攻略，必去景点推荐",
-    gradient: "from-green-400 to-emerald-500",
-  },
-  {
-    icon: Train, label: "火车票查询",
-    query: "明天北京到上海的高铁",
-    gradient: "from-purple-400 to-violet-500",
-  },
-  {
-    icon: UtensilsCrossed, label: "美食探店",
-    query: "北京烤鸭哪家好吃？推荐几家老字号",
+    id: "food",
+    icon: UtensilsCrossed,
+    label: "美食探店",
+    desc: "找附近热门美食，避坑推荐",
     gradient: "from-red-400 to-pink-500",
   },
   {
-    icon: Building2, label: "城市漫游",
-    query: "上海三日游，外滩迪士尼田子坊路线",
-    gradient: "from-indigo-400 to-blue-500",
+    id: "hotel",
+    icon: Hotel,
+    label: "酒店推荐",
+    desc: "比价评分，精选好房",
+    gradient: "from-orange-400 to-rose-500",
+  },
+  {
+    id: "attractions",
+    icon: Ticket,
+    label: "景点门票",
+    desc: "门票价格、开放时间、攻略",
+    gradient: "from-blue-400 to-cyan-500",
+  },
+  {
+    id: "itinerary",
+    icon: Route,
+    label: "行程规划",
+    desc: "AI定制专属旅游路线",
+    gradient: "from-green-400 to-emerald-500",
+  },
+  {
+    id: "free",
+    icon: MessageSquareText,
+    label: "自由输入",
+    desc: "直接描述你的旅行需求",
+    gradient: "from-purple-400 to-violet-500",
   },
 ];
 
 const staggerClass = (i) => {
-  const classes = ["stagger-1", "stagger-2", "stagger-3", "stagger-4", "stagger-5", "stagger-6"];
-  return classes[i] || "stagger-6";
+  const classes = ["stagger-1", "stagger-2", "stagger-3", "stagger-4", "stagger-5"];
+  return classes[i] || "stagger-5";
 };
 
-export default function WelcomeScreen({ onQuickSelect }) {
+export default function WelcomeScreen({ onSelectMode }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
       {/* Decorative shapes */}
@@ -60,28 +65,27 @@ export default function WelcomeScreen({ onQuickSelect }) {
         美团酒旅数据实时查询 · 酒店 / 景点 / 门票 / 交通一站式搞定
       </p>
 
-      {/* Quick select cards */}
+      {/* Mode selection cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-xl w-full">
-        {QUICK_TRIPS.map(({ icon: Icon, label, query, gradient }, i) => (
+        {MODES.map(({ id, icon: Icon, label, desc, gradient }, i) => (
           <button
-            key={label}
-            onClick={() => onQuickSelect(query)}
-            className={`${staggerClass(i)} group relative rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10 active:scale-95`}
+            key={id}
+            onClick={() => onSelectMode(id)}
+            className={`${staggerClass(i)} group relative rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10 active:scale-95`}
           >
             {/* Gradient icon background */}
             <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} mb-2 shadow-sm transition-transform duration-300 group-hover:scale-110`}>
               <Icon size={20} className="text-white" />
             </div>
-            <p className="text-xs font-semibold text-slate-700 dark:text-gray-300">
+            <p className="text-sm font-bold text-slate-800 dark:text-gray-200 mb-0.5">
               {label}
+            </p>
+            <p className="text-[11px] text-slate-400 dark:text-gray-500 leading-tight">
+              {desc}
             </p>
           </button>
         ))}
       </div>
-
-      <p className="text-xs text-slate-400 dark:text-gray-500 mt-6">
-        或在下方输入框直接描述你的需求
-      </p>
     </div>
   );
 }
