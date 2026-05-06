@@ -1,5 +1,18 @@
 import { useState, useRef, useCallback } from "react";
 
+// UUID v4 fallback for non-HTTPS contexts (LAN IPs)
+function generateUUID() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // Fallback for insecure contexts (http://192.168.x.x)
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 const WS_URL = `ws://${window.location.hostname}:8000/ws`;
 
 export function useWebSocket() {
@@ -25,7 +38,7 @@ export function useWebSocket() {
     setStatus("connecting");
     setError(null);
 
-    const sessionId = crypto.randomUUID();
+    const sessionId = generateUUID();
     const ws = new WebSocket(`${WS_URL}/${sessionId}`);
     wsRef.current = ws;
 
