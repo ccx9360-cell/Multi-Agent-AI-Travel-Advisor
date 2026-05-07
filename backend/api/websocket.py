@@ -16,6 +16,7 @@ from backend.config.settings import settings
 from backend.agents.llm import _get_api_key
 from backend.services.amap_weather import amap_weather
 from backend.services.trains.train_service import query_trains
+from backend.services.database import save_itinerary, update_itinerary, list_itineraries, search_itineraries
 
 logger = logging.getLogger(__name__)
 
@@ -179,16 +180,15 @@ async def handle_quick_query(session_id: str, request: str, scenario: str) -> Op
 
 async def run_with_progress(session_id: str, user_request: str, scenario: str = "free"):
     """Run the travel pipeline while sending progress updates via WebSocket."""
-    itinerary_id = str(uuid.uuid4())
+    itinerary_id = uuid.uuid4().hex[:12]
 
-    itinerary_store[itinerary_id] = {
-        "id": itinerary_id,
-        "request": user_request,
-        "scenario": scenario,
-        "itinerary": "",
-        "created_at": datetime.now().isoformat(),
-        "status": "processing",
-    }
+    # 立即保存到数据库
+    save_itinerary(
+        request=user_request,
+        scenario=scenario,
+        status="processing",
+        itinerary_id=itinerary_id,
+    )
 
     await manager.send_message(session_id, {
         "type": "started",
@@ -226,6 +226,9 @@ async def run_with_progress(session_id: str, user_request: str, scenario: str = 
         itinerary_store[itinerary_id]["itinerary"] = result
         itinerary_store[itinerary_id]["status"] = "completed"
 
+        # 保存到 SQLite
+        update_itinerary(itinerary_id, result, "completed")
+
         await manager.send_message(session_id, {
             "type": "completed",
             "itinerary_id": itinerary_id,
@@ -237,6 +240,8 @@ async def run_with_progress(session_id: str, user_request: str, scenario: str = 
     except asyncio.TimeoutError:
         logger.error(f"[{session_id}] Pipeline timed out after {PIPELINE_TIMEOUT}s")
         itinerary_store[itinerary_id]["status"] = "failed"
+        # 保存超时状态
+        update_itinerary(itinerary_id, "", "failed")
         await manager.send_message(session_id, {
             "type": "error",
             "message": f"处理超时（超过 {PIPELINE_TIMEOUT//60} 分钟），请简化查询后重试",

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Clock, Trash2, MapPin, X, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
+import { Clock, Trash2, MapPin, X, CheckCircle, AlertCircle, AlertTriangle, Search, Compass } from "lucide-react";
 
-export default function Sidebar({ history, onSelect, onDelete, isOpen, onClose }) {
+export default function Sidebar({ history, onSelect, onDelete, isOpen, onClose, searchTerm, onSearchChange, stats }) {
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const handleDelete = (id, e) => {
@@ -35,26 +35,71 @@ export default function Sidebar({ history, onSelect, onDelete, isOpen, onClose }
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="p-4 border-b border-slate-200/50 dark:border-gray-700/30 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock size={15} className="text-slate-400 dark:text-gray-500" />
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-gray-300">历史记录</h2>
+        <div className="p-4 border-b border-slate-200/50 dark:border-gray-700/30">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Clock size={15} className="text-slate-400 dark:text-gray-500" />
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-gray-300">历史记录</h2>
+              {stats && stats.total > 0 && (
+                <span className="text-[11px] text-slate-400 dark:text-gray-600 bg-slate-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full">
+                  {stats.total}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg lg:hidden transition-colors"
+            >
+              <X size={16} className="text-slate-500 dark:text-gray-400" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg lg:hidden transition-colors"
-          >
-            <X size={16} className="text-slate-500 dark:text-gray-400" />
-          </button>
+
+          {/* Search bar */}
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
+            <input
+              type="text"
+              value={searchTerm || ""}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              placeholder="搜索行程..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200/50 dark:border-gray-700/30 bg-white/60 dark:bg-gray-800/60 text-slate-700 dark:text-gray-300 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-400/50 transition-all"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => onSearchChange?.("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-gray-200"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Top cities mini stats */}
+          {stats?.top_cities?.length > 0 && !searchTerm && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {stats.top_cities.slice(0, 4).map((c) => (
+                <span
+                  key={c.city}
+                  className="text-[10px] bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 px-1.5 py-0.5 rounded-full flex items-center gap-1"
+                >
+                  <MapPin size={9} />
+                  {c.city}
+                  <span className="text-slate-300 dark:text-gray-600">×{c.count}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">
           {history.length === 0 ? (
             <div className="text-center py-8 px-4">
               <MapPin size={32} className="text-slate-200 dark:text-gray-700 mx-auto mb-2" />
-              <p className="text-sm text-slate-400 dark:text-gray-500">暂无历史记录</p>
+              <p className="text-sm text-slate-400 dark:text-gray-500">
+                {searchTerm ? "未找到匹配的行程" : "暂无历史记录"}
+              </p>
               <p className="text-xs text-slate-300 dark:text-gray-600 mt-1">
-                查询过的行程会显示在这里
+                {searchTerm ? "试试其他关键词" : "生成的行程会显示在这里"}
               </p>
             </div>
           ) : (
@@ -100,6 +145,7 @@ export default function Sidebar({ history, onSelect, onDelete, isOpen, onClose }
                             ? "处理中"
                             : "失败"}
                         </span>
+                        {item.city && ` · ${item.city}`}
                       </p>
                     </div>
                     <button

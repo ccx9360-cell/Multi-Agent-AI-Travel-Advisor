@@ -1,6 +1,6 @@
 import {
   UtensilsCrossed, Hotel, Ticket, Route,
-  MessageSquareText, Compass,
+  MessageSquareText, Compass, BookOpen,
 } from "lucide-react";
 
 const MODES = [
@@ -38,6 +38,13 @@ const MODES = [
     label: "自由输入",
     desc: "直接描述你的旅行需求",
     gradient: "from-purple-400 to-violet-500",
+  },
+  {
+    id: "knowledge",
+    icon: BookOpen,
+    label: "知识问答",
+    desc: "问任何关于中国旅行的问题",
+    gradient: "from-cyan-400 to-blue-500",
   },
 ];
 

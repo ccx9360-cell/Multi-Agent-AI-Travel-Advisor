@@ -9,6 +9,7 @@ import HotelForm from "./components/HotelForm";
 import AttractionForm from "./components/AttractionForm";
 import TripPlannerForm from "./components/TripPlannerForm";
 import FreeInputScreen from "./components/FreeInputScreen";
+import KnowledgeChat from "./components/KnowledgeChat";
 import ResultCards from "./components/ResultCards";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useItineraryHistory } from "./hooks/useItineraryHistory";
@@ -119,7 +120,22 @@ export default function App() {
     reset,
   } = useWebSocket();
 
-  const { history, loading: historyLoading, fetchHistory, deleteItinerary } = useItineraryHistory();
+  const {
+    history,
+    loading: historyLoading,
+    fetchHistory,
+    deleteItinerary,
+    searchTerm,
+    setSearchTerm,
+    fetchStats,
+    fetchTopCities,
+  } = useItineraryHistory();
+  const [stats, setStats] = useState(null);
+
+  // Fetch stats on mount
+  useEffect(() => {
+    fetchStats().then(setStats);
+  }, [fetchStats]);
 
   const resultRef = useRef(null);
 
@@ -160,6 +176,8 @@ export default function App() {
   const handleSelectMode = (modeId) => {
     if (modeId === "free") {
       setMode("free");
+    } else if (modeId === "knowledge") {
+      setMode("knowledge");
     } else {
       setMode(modeId);
     }
@@ -210,6 +228,9 @@ export default function App() {
             onDelete={deleteItinerary}
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            stats={stats}
           />
 
           <main className="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-72">
@@ -239,6 +260,11 @@ export default function App() {
               {/* Free input mode — dedicated input screen */}
               {mode === "free" && (
                 <FreeInputScreen onSubmit={handleFormSubmit} onBack={() => setMode("menu")} />
+              )}
+
+              {/* RAG knowledge chat */}
+              {mode === "knowledge" && (
+                <KnowledgeChat onBack={() => setMode("menu")} />
               )}
 
               {/* Processing */}

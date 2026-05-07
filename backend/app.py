@@ -42,6 +42,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"RAG 初始化跳过: {e}")
 
+    # 初始化 SQLite 数据库 + 示例数据
+    try:
+        from backend.services.database import init_db, generate_sample_data
+        init_db()
+        generate_sample_data()
+    except Exception as e:
+        logger.warning(f"数据库初始化跳过: {e}")
+
     # 合并 CORS origins
     settings.cors_origins = list(set(settings.cors_origins + settings.cors_extra_origins))
 

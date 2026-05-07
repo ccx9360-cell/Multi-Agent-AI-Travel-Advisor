@@ -16,6 +16,11 @@ from backend.models.schemas import TravelRequest
 from backend.crew.orchestrator import run_travel_pipeline
 from backend.api.websocket import itinerary_store
 from backend.agents.llm import _get_api_key
+from backend.services.database import (
+    list_itineraries, get_itinerary, delete_itinerary as db_delete,
+    search_itineraries, get_stats, get_top_cities,
+    save_knowledge_chat, list_knowledge_chats,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,27 +37,46 @@ async def health_check():
 
 
 @router.get("/itineraries")
-async def list_itineraries():
-    """List all saved itineraries."""
-    items = sorted(itinerary_store.values(), key=lambda x: x["created_at"], reverse=True)
+async def list_itineraries_endpoint(limit: int = 50, offset: int = 0):
+    """列出所有历史行程。"""
+    items = list_itineraries(limit=limit, offset=offset)
     return {"itineraries": items}
 
 
+@router.get("/itineraries/stats")
+async def itinerary_stats():
+    """行程统计信息。"""
+    return get_stats()
+
+
+@router.get("/itineraries/top-cities")
+async def top_cities(limit: int = 5):
+    """最常查询的城市排行。"""
+    cities = get_top_cities(limit=limit)
+    return {"cities": cities}
+
+
+@router.get("/itineraries/search")
+async def search_itineraries_endpoint(q: str = Query(..., description="搜索关键词")):
+    """搜索历史行程。"""
+    items = search_itineraries(q)
+    return {"itineraries": items, "total": len(items)}
+
+
 @router.get("/itineraries/{itinerary_id}")
-async def get_itinerary(itinerary_id: str):
-    """Get a specific itinerary by ID."""
-    item = itinerary_store.get(itinerary_id)
+async def get_itinerary_endpoint(itinerary_id: str):
+    """获取单条行程详情。"""
+    item = get_itinerary(itinerary_id)
     if not item:
-        raise HTTPException(status_code=404, detail="Itinerary not found")
+        raise HTTPException(status_code=404, detail="行程未找到")
     return item
 
 
 @router.delete("/itineraries/{itinerary_id}")
-async def delete_itinerary(itinerary_id: str):
-    """Delete a specific itinerary."""
-    if itinerary_id not in itinerary_store:
-        raise HTTPException(status_code=404, detail="Itinerary not found")
-    del itinerary_store[itinerary_id]
+async def delete_itinerary_endpoint(itinerary_id: str):
+    """删除行程。"""
+    if not db_delete(itinerary_id):
+        raise HTTPException(status_code=404, detail="行程未找到")
     return {"status": "deleted"}
 
 
@@ -139,3 +163,49 @@ async def knowledge_count():
         return {"count": get_knowledge_count()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── 知识库AI聊天 ────────────────────────────────────────────
+
+
+class KnowledgeChatRequest(BaseModel):
+    question: str
+
+
+@router.post("/knowledge/chat")
+async def knowledge_chat(req: KnowledgeChatRequest):
+    """知识库AI问答 — 结合RAG+LLM回答旅行问题。"""
+    if not req.question.strip():
+        raise HTTPException(status_code=400, detail="请输入问题")
+
+    try:
+        from backend.services.knowledge import query_knowledge_base
+
+        # 先查RAG获取相关上下文
+        rag_result = query_knowledge_base(req.question, top_k=8)
+
+        if not rag_result:
+            answer = f"抱歉，知识库中暂无关于「{req.question}」的信息。试试换个问法？"
+        else:
+            # 直接用RAG结果作为回答（节省LLM消耗）
+            answer = rag_result
+
+        # 保存聊天记录
+        chat_id = save_knowledge_chat(req.question, answer)
+
+        return {
+            "chat_id": chat_id,
+            "question": req.question,
+            "answer": answer,
+            "has_context": bool(rag_result),
+        }
+    except Exception as e:
+        logger.error(f"知识库聊天失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/knowledge/chat/history")
+async def knowledge_chat_history(limit: int = 30):
+    """获取知识库聊天历史。"""
+    chats = list_knowledge_chats(limit=limit)
+    return {"chats": chats}
