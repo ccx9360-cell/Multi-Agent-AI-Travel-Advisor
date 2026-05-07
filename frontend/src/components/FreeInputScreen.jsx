@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Send, Sparkles, MapPin, UtensilsCrossed, Hotel, Compass } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, MapPin, UtensilsCrossed, Hotel, Compass, Sun, Train, BookOpen } from "lucide-react";
 
 const EXAMPLE_QUESTIONS = [
   "成都三日自由行，预算3000，学生党",
@@ -10,6 +10,13 @@ const EXAMPLE_QUESTIONS = [
   "重庆洪崖洞附近有什么值得住的民宿？",
   "大理洱海骑行路线推荐",
   "西安兵马俑+华山三日游怎么安排",
+];
+
+// ── 快捷查询按钮 ──
+const QUICK_TOOLS = [
+  { label: "查天气", key: "weather", icon: Sun, color: "from-blue-400 to-cyan-500", desc: "目的地实时天气" },
+  { label: "查攻略", key: "knowledge", icon: BookOpen, color: "from-emerald-400 to-teal-500", desc: "景点美食攻略知识" },
+  { label: "查火车", key: "trains", icon: Train, color: "from-violet-400 to-purple-500", desc: "城际列车车次查询" },
 ];
 
 export default function FreeInputScreen({ onSubmit, onBack }) {
@@ -118,6 +125,35 @@ export default function FreeInputScreen({ onSubmit, onBack }) {
               </div>
             </div>
           </form>
+
+          {/* 快捷工具 */}
+          <div className="mt-5 animate-fade-in">
+            <p className="text-xs text-slate-400 dark:text-gray-500 mb-2.5 text-center">
+              ⚡ 快捷查询
+            </p>
+            <div className="flex justify-center gap-3">
+              {QUICK_TOOLS.map((tool) => {
+                const Icon = tool.icon;
+                return (
+                  <button
+                    key={tool.key}
+                    type="button"
+                    onClick={() => {
+                      const msg = question.trim() || "北京";
+                      onSubmit(`快速查询:${tool.key}:${msg}`, tool.key);
+                    }}
+                    className="group flex flex-col items-center gap-1.5 bg-white/60 dark:bg-gray-800/50 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:border-white/50 dark:hover:border-gray-600/50 rounded-xl px-4 py-3 transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-95 min-w-[90px]"
+                  >
+                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${tool.color} flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow`}>
+                      <Icon size={16} className="text-white" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-600 dark:text-gray-300">{tool.label}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-gray-500 leading-tight text-center">{tool.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Example questions */}
           {showExamples && (

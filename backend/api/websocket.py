@@ -6,6 +6,7 @@ Timeout aligned: frontend 120s -> backend 180s (frontend has a 150s timeout).
 import asyncio
 import uuid
 import logging
+import json
 from datetime import datetime
 from typing import Dict, Optional
 from fastapi import WebSocket, WebSocketDisconnect
@@ -13,6 +14,8 @@ from fastapi import WebSocket, WebSocketDisconnect
 from backend.crew.orchestrator import run_travel_pipeline
 from backend.config.settings import settings
 from backend.agents.llm import _get_api_key
+from backend.services.amap_weather import amap_weather
+from backend.services.trains.train_service import query_trains
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +62,119 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+# ── 快捷查询（跳过 LLM，直接调 API） ───────────────────────────
+
+
+async def handle_quick_query(session_id: str, request: str, scenario: str) -> Optional[str]:
+    """Handle quick queries that bypass the LLM (weather/train/knowledge)."""
+    prefix = "快速查询:"
+    if not request.startswith(prefix):
+        return None
+
+    parts = request[len(prefix):].split(":", 1)
+    if len(parts) != 2:
+        return None
+
+    query_type = parts[0]
+    query_value = parts[1].strip()
+
+    await manager.send_message(session_id, {
+        "type": "started",
+        "itinerary_id": f"quick_{query_type}",
+        "agents": [{"key": query_type, "label": {"weather": "天气查询", "trains": "火车票查询", "knowledge": "攻略查询"}.get(query_type, query_type), "description": f"快速{query_type}查询..."}],
+    })
+
+    try:
+        if query_type == "weather":
+            await manager.send_message(session_id, {
+                "type": "agent_progress",
+                "agent_key": "weather", "agent_label": "天气查询", "description": "查询实时天气...",
+                "step": 1, "total_steps": 1, "status": "running",
+            })
+            result = await asyncio.get_event_loop().run_in_executor(None, amap_weather, query_value)
+            if isinstance(result, dict) and result.get("live"):
+                live = result["live"]
+                forecasts = result.get("forecast", [])
+                lines = [
+                    f"🌤 **{live.get('city', query_value)} 实时天气**",
+                    f"🌡 {live.get('temperature', '')}°C | {live.get('weather', '')}",
+                    f"💨 {live.get('wind_direction', '')} {live.get('wind_power', '')}",
+                    f"💧 湿度: {live.get('humidity', '')}%",
+                ]
+                if forecasts:
+                    lines.append("")
+                    lines.append("📅 **未来天气预报:**")
+                    for f in forecasts[:4]:
+                        lines.append(f"  {f.get('date', '')}: {f.get('day_weather', '')}/{f.get('night_weather', '')} {f.get('day_temp', '')}~{f.get('night_temp', '')}°C")
+                output = "\n".join(lines)
+            else:
+                output = result.get("error", "天气查询暂不可用")
+
+        elif query_type == "trains":
+            await manager.send_message(session_id, {
+                "type": "agent_progress",
+                "agent_key": "trains", "agent_label": "火车票查询", "description": "查询12306实时车次...",
+                "step": 1, "total_steps": 1, "status": "running",
+            })
+            # Parse "北京 上海" or "北京到上海"
+            import re
+            match = re.match(r"([\u4e00-\u9fff]+)\s*(?:到|->|→)?\s*([\u4e00-\u9fff]+)", query_value)
+            if match:
+                from_st = match.group(1)
+                to_st = match.group(2)
+                from datetime import date
+                date_str = date.today().isoformat()
+                result = await asyncio.get_event_loop().run_in_executor(None, query_trains, from_st, to_st, date_str)
+                if result.get("trains"):
+                    lines = [f"🚄 **{from_st} → {to_st}** ({date_str}) | 共 {result['total']} 趟列车"]
+                    for t in result["trains"][:8]:
+                        seats = []
+                        for s in t.get("seat_types", [])[:4]:
+                            if s.get("has_tickets"):
+                                rem = f"{s['remaining']}张" if s['remaining'] > 0 else "有票"
+                                seats.append(f"{s['name']}: {rem}")
+                        line = f"\n🚆 **{t['train_number']}** ({t.get('train_type', '')})"
+                        line += f"\n🕐 {t.get('departure_time', '')} → {t.get('arrival_time', '')} ({t.get('duration', '')})"
+                        line += f"\n🚉 {t.get('from_station', '')} → {t.get('to_station', '')}"
+                        if seats:
+                            line += f"\n💺 {' | '.join(seats)}"
+                        lines.append(line)
+                    output = "\n".join(lines)
+                else:
+                    output = result.get("error", "暂无可用车次")
+            else:
+                output = "格式示例：北京到上海 或 广州 深圳"
+
+        elif query_type == "knowledge":
+            await manager.send_message(session_id, {
+                "type": "agent_progress",
+                "agent_key": "knowledge", "agent_label": "攻略查询", "description": "检索旅行知识库...",
+                "step": 1, "total_steps": 1, "status": "running",
+            })
+            from backend.services.knowledge import query_knowledge_base
+            result = query_knowledge_base(query_value)
+            output = result if result else f"未找到关于「{query_value}」的攻略信息。"
+
+        else:
+            output = f"未知的快捷查询类型: {query_type}"
+
+        await manager.send_message(session_id, {
+            "type": "completed",
+            "itinerary_id": f"quick_{query_type}_{uuid.uuid4().hex[:6]}",
+            "itinerary": output,
+            "scenario": query_type,
+        })
+        return output
+
+    except Exception as e:
+        logger.error(f"Quick query failed: {e}")
+        await manager.send_message(session_id, {
+            "type": "error",
+            "message": f"查询失败: {e}",
+        })
+        return None
 
 
 async def run_with_progress(session_id: str, user_request: str, scenario: str = "free"):
@@ -156,6 +272,11 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                         "type": "error",
                         "message": "LLM API Key 未配置，请检查 .env 文件",
                     })
+                    continue
+
+                # 先尝试快速查询（跳过 LLM）
+                quick_result = await handle_quick_query(session_id, user_message, scenario)
+                if quick_result is not None:
                     continue
 
                 task = asyncio.create_task(run_with_progress(session_id, user_message, scenario))

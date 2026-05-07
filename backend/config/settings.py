@@ -41,6 +41,13 @@ class Settings:
         "http://localhost:5173",
         "http://localhost:3000",
     ])
+    cors_extra_origins: list = field(
+        default_factory=lambda: [
+            o.strip()
+            for o in os.getenv("CORS_EXTRA_ORIGINS", "").split(",")
+            if o.strip()
+        ]
+    )
 
 
 settings = Settings()

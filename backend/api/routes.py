@@ -6,9 +6,11 @@ import os
 import uuid
 import asyncio
 import logging
-from datetime import datetime
+from datetime import date, datetime
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from backend.models.schemas import TravelRequest
 from backend.crew.orchestrator import run_travel_pipeline
@@ -74,4 +76,66 @@ async def create_plan(request: TravelRequest):
         return itinerary_store[itinerary_id]
     except Exception as e:
         logger.error(f"Plan creation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── 火车票查询 API ──────────────────────────────────────────────
+
+
+@router.get("/trains")
+async def search_trains(
+    from_station: str = Query(..., description="出发站（如：北京）"),
+    to_station: str = Query(..., description="到达站（如：上海）"),
+    date_str: str = Query(default="", description="日期（YYYY-MM-DD，默认今天）"),
+):
+    """查询中国火车票。直接调用 12306 公开接口，无需登录。"""
+    from backend.services.trains.train_service import query_trains
+
+    query_date = date_str or date.today().isoformat()
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, query_trains, from_station, to_station, query_date)
+    return result
+
+
+# ── 天气查询 API ────────────────────────────────────────────────
+
+
+@router.get("/weather")
+async def search_weather(city: str = Query(..., description="城市名（如：北京）")):
+    """查询实时天气和天气预报。使用高德天气 API。"""
+    from backend.services.amap_weather import amap_weather
+
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, amap_weather, city)
+    return result
+
+
+# ── RAG 知识库 API ────────────────────────────────────────────────
+
+
+class KnowledgeQuery(BaseModel):
+    query: str
+    destination: Optional[str] = None
+    top_k: int = 5
+
+
+@router.post("/knowledge/query")
+async def query_knowledge(req: KnowledgeQuery):
+    """查询旅行知识库（RAG）。"""
+    try:
+        from backend.services.knowledge import query_knowledge_base
+
+        result = query_knowledge_base(req.query, req.destination, req.top_k)
+        return {"query": req.query, "result": result, "length": len(result)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/knowledge/count")
+async def knowledge_count():
+    """知识库中的文档数量。"""
+    try:
+        from backend.services.knowledge import get_knowledge_count
+        return {"count": get_knowledge_count()}
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

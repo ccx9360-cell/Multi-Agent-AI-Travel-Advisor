@@ -26,8 +26,25 @@ async def lifespan(app: FastAPI):
         logger.warning("LLM API Key 未配置。AI agents 将无法工作。")
     if not settings.amap_api_key:
         logger.warning("AMAP_API_KEY 未配置。高德地图/天气服务将不可用。")
-    if not settings.amap_api_key:
+    if settings.amap_api_key:
         logger.info("高德地图已配置 ✓")
+
+    # 预热 RAG 知识库
+    logger.info("正在初始化 RAG 知识库...")
+    try:
+        from backend.services.knowledge.rag_service import RAGService
+        rag = RAGService()
+        count = rag.count
+        if count > 0:
+            logger.info(f"RAG 知识库已就绪 ({count} 条记录)")
+        else:
+            logger.warning("RAG 知识库为空，将自动加载数据。")
+    except Exception as e:
+        logger.warning(f"RAG 初始化跳过: {e}")
+
+    # 合并 CORS origins
+    settings.cors_origins = list(set(settings.cors_origins + settings.cors_extra_origins))
+
     yield
 
 
