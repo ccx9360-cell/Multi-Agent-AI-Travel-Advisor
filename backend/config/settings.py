@@ -40,9 +40,6 @@ class Settings:
     cors_origins: list = field(default_factory=lambda: [
         "http://localhost:5173",
         "http://localhost:3000",
-        "http://192.168.100.3:5173",
-        "http://192.168.100.3:5174",
-        "http://192.168.100.3:3000",
     ])
 
 

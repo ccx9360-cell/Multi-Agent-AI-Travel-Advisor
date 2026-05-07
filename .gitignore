@@ -56,6 +56,12 @@ Thumbs.db
 .coverage
 htmlcov/
 
+# Hermes agent workspace
+.hermes/
+
+# Skill docs (not part of source code)
+meituan-travel-skill.md
+
 # Frontend
 frontend/node_modules/
 frontend/dist/
