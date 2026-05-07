@@ -1,7 +1,6 @@
 """
-FastAPI application entry point.
+FastAPI application entry point — China-focused.
 """
-
 import logging
 from contextlib import asynccontextmanager
 
@@ -24,18 +23,18 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     if not _get_api_key():
-        logger.warning("LLM API Key 未配置。请检查 .env 或 ~/.codex/auth.json。AI agents 将无法工作。")
-    if not settings.amadeus_api_key:
-        logger.warning("AMADEUS_API_KEY not set. Flight search will use SerpApi fallback.")
-    if not settings.serpapi_key:
-        logger.warning("SERPAPI_KEY not set. No flight search fallback available.")
+        logger.warning("LLM API Key 未配置。AI agents 将无法工作。")
+    if not settings.amap_api_key:
+        logger.warning("AMAP_API_KEY 未配置。高德地图/天气服务将不可用。")
+    if not settings.amap_api_key:
+        logger.info("高德地图已配置 ✓")
     yield
 
 
 app = FastAPI(
-    title="AI Travel Planner API",
-    version="2.0.0",
-    description="Multi-Agent Travel Planner with real-time API data",
+    title="AI 中国旅行规划助手",
+    version="2.1.0",
+    description="基于美团酒旅 + 高德地图 + 12306 的多智能体中国旅行规划助手",
     lifespan=lifespan,
 )
 

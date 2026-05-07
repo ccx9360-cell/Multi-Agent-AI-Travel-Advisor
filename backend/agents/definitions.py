@@ -1,9 +1,6 @@
 """
-AI Agent definitions — only 3 agents that still require LLM reasoning.
-Data-fetching agents (flights, accommodation, activities, logistics)
-are now pure API services and no longer need AI.
+AI Agent definitions — China-focused travel planning.
 """
-
 from crewai import Agent
 from typing import List
 from backend.agents.llm import create_gemini_llm
@@ -12,38 +9,38 @@ from backend.agents.llm import create_gemini_llm
 def create_travel_manager(tools: List = None) -> Agent:
     """Parses user requests into structured travel parameters."""
     return Agent(
-        role="Travel Planning Manager",
+        role="旅行规划经理",
         goal=(
-            "Parse user travel requests into structured parameters: "
-            "destinations, dates, travelers, interests, budget. "
-            "Output a precise structured breakdown."
+            "将用户的旅行需求解析为结构化参数：目的地、日期、人数、预算、兴趣。"
+            "输出精确的结构化信息。"
         ),
         backstory=(
-            "You are a travel planning expert. You extract precise details "
-            "from vague requests and fill reasonable defaults for missing info."
+            "你是一名中国旅行规划专家。能从模糊的需求中提取精确信息，"
+            "对缺失信息填充合理默认值。熟悉中国所有热门旅游城市。"
         ),
         tools=tools or [],
         llm=create_gemini_llm(),
-        verbose=False,  # ← REDUCED: was True
+        verbose=False,
         allow_delegation=False,
-        max_iter=5,     # ← REDUCED: was 10
+        max_iter=5,
     )
 
 
 def create_travel_knowledge_agent(tools: List = None) -> Agent:
-    """Provides cultural insights, visa info, and practical advice via RAG."""
+    """Provides China travel knowledge via RAG."""
     return Agent(
-        role="Travel Knowledge Expert",
+        role="中国旅行知识专家",
         goal=(
-            "Provide expert travel advice, cultural insights, visa requirements, "
-            "and destination-specific knowledge from the travel knowledge base."
+            "提供专业的中国旅行建议：目的地攻略、美食推荐、"
+            "交通建议、最佳旅行季节、预算参考等。"
         ),
         backstory=(
-            "You are a travel encyclopedia with knowledge of destinations worldwide."
+            "你是一部中国旅行百科全书，熟悉全国所有热门旅游目的地的"
+            "景点、美食、交通和住宿信息。能给出实用、接地气的建议。"
         ),
         tools=tools or [],
         llm=create_gemini_llm(),
-        verbose=False,  # ← REDUCED: was True
+        verbose=False,
         allow_delegation=False,
     )
 
@@ -51,18 +48,18 @@ def create_travel_knowledge_agent(tools: List = None) -> Agent:
 def create_itinerary_compiler(tools: List = None) -> Agent:
     """Synthesizes all data into the final itinerary."""
     return Agent(
-        role="Itinerary Compiler & Optimizer",
+        role="行程编排与优化师",
         goal=(
-            "Synthesize real API data (flights, hotels, activities, logistics) "
-            "into a practical day-by-day itinerary with logical flow and optimal pacing."
+            "将美团酒旅数据、天气信息、交通信息和攻略知识"
+            "整合成一份实用的每日行程，逻辑合理、节奏适中。"
         ),
         backstory=(
-            "You are a master travel planner. You group activities by neighborhood "
-            "to minimize transit, balance busy days with downtime, and include all "
-            "practical details: addresses, prices, and booking links."
+            "你是一名资深的中国旅行规划师。你会按区域分组活动以减少交通时间，"
+            "平衡充实日与休闲日，包含所有实用细节：地址、价格、电话、营业时间。"
+            "特别擅长规划城市游、美食游和自然风光游。"
         ),
         tools=tools or [],
         llm=create_gemini_llm(),
-        verbose=False,  # ← REDUCED: was True
+        verbose=False,
         allow_delegation=False,
     )

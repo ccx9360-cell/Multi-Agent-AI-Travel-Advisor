@@ -1,1 +1,0 @@
-from backend.services.accommodation.service import AccommodationService

@@ -8,6 +8,7 @@ import FoodForm from "./components/FoodForm";
 import HotelForm from "./components/HotelForm";
 import AttractionForm from "./components/AttractionForm";
 import TripPlannerForm from "./components/TripPlannerForm";
+import FreeInputScreen from "./components/FreeInputScreen";
 import ResultCards from "./components/ResultCards";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useItineraryHistory } from "./hooks/useItineraryHistory";
@@ -144,12 +145,13 @@ export default function App() {
   }, [status, wsScenario]);
 
   // When status changes to completed, show result mode
+  // Don't override user-selected mode with "connecting" — that's a transient WebSocket setup state
   useEffect(() => {
     if (status === "completed") {
       setMode("result");
     } else if (status === "error") {
       setMode("menu");
-    } else if (status === "processing" || status === "connecting") {
+    } else if (status === "processing") {
       setMode("processing");
     }
   }, [status]);
@@ -194,7 +196,7 @@ export default function App() {
     fetchHistory();
   };
 
-  const isProcessing = status === "processing" || status === "connecting";
+  const isProcessing = status === "processing";
 
   return (
     <ErrorBoundary>
@@ -234,11 +236,9 @@ export default function App() {
                 <TripPlannerForm onSubmit={handleFormSubmit} onBack={() => setMode("menu")} />
               )}
 
-              {/* Free input mode */}
+              {/* Free input mode — dedicated input screen */}
               {mode === "free" && (
-                <div className="flex-1 flex flex-col">
-                  <WelcomeScreen onSelectMode={() => {}} />
-                </div>
+                <FreeInputScreen onSubmit={handleFormSubmit} onBack={() => setMode("menu")} />
               )}
 
               {/* Processing */}
@@ -309,8 +309,8 @@ export default function App() {
               )}
             </div>
 
-            {/* Chat input — only in menu and free mode */}
-            {(mode === "menu" || mode === "free") && (
+            {/* Chat input — only in menu mode */}
+            {mode === "menu" && (
               <ChatInput onSend={handleSend} disabled={isProcessing} showExamples={mode === "menu"} />
             )}
           </main>

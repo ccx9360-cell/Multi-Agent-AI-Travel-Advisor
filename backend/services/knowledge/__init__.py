@@ -1,1 +1,1 @@
-from backend.services.knowledge.rag import RAGService
+# Knowledge service package
